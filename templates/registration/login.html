@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}შესვლა — Zoomart მოთხოვნები{% endblock %}
+{% block auth_content %}
+<div class="min-h-screen grid place-items-center bg-gray-50 px-4">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-6">
+      <div class="h-10 w-10 rounded-lg bg-brand-600 text-white grid place-items-center font-bold mx-auto mb-2">Z</div>
+      <h1 class="text-lg font-semibold">Zoomart — ხარჯებისა და მოთხოვნების დამტკიცება</h1>
+      <p class="text-sm text-gray-500">შედით თქვენი კომპანიის ანგარიშით</p>
+    </div>
+    <div class="card p-6">
+      {% if form.errors %}
+        <div class="mb-4 rounded-lg bg-red-50 text-red-700 border border-red-200 px-3 py-2 text-sm">არასწორი მომხმარებელი ან პაროლი.</div>
+      {% endif %}
+      <form method="post">
+        {% csrf_token %}
+        <div class="mb-4">
+          <label class="field-label">მომხმარებლის სახელი</label>
+          <input type="text" name="username" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none" autofocus required>
+        </div>
+        <div class="mb-5">
+          <label class="field-label">პაროლი</label>
+          <input type="password" name="password" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none" required>
+        </div>
+        <button type="submit" class="btn btn-primary w-full">შესვლა</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

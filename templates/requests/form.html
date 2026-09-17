@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}{% if is_new %}ახალი მოთხოვნა{% else %}მოთხოვნის რედაქტირება{% endif %} — Zoomart მოთხოვნები{% endblock %}
+{% block content %}
+<div class="max-w-3xl">
+  <h1 class="text-xl font-semibold mb-1">{% if is_new %}ახალი მოთხოვნა{% else %}რედაქტირება {{ obj.request_number }}{% endif %}</h1>
+  <p class="text-sm text-gray-500 mb-6">{% if is_new %}ჯერ შეინახება მონახაზად — მოგვიანებით შეძლებთ დამტკიცებისთვის გაგზავნას.{% else %}ამ მოთხოვნის რედაქტირება შესაძლებელია, სანამ ის არის 'მონახაზი' ან 'საჭიროა დამატებითი ინფორმაცია' სტატუსში.{% endif %}</p>
+
+  {% if form.non_field_errors %}
+    <div class="mb-4 rounded-lg bg-red-50 text-red-700 border border-red-200 px-3 py-2 text-sm">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <form method="post" class="card p-6 space-y-5">
+    {% csrf_token %}
+    <div>
+      <label class="field-label">სათაური *</label>
+      {{ form.title }}
+      {% if form.title.errors %}<p class="text-xs text-red-600 mt-1">{{ form.title.errors|join:", " }}</p>{% endif %}
+    </div>
+    <div>
+      <label class="field-label">აღწერა *</label>
+      {{ form.description }}
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="field-label">დეპარტამენტი *</label>{{ form.department }}</div>
+      <div><label class="field-label">კატეგორია *</label>{{ form.category }}</div>
+      <div><label class="field-label">მოთხოვნის ტიპი</label>{{ form.request_type }}</div>
+      <div><label class="field-label">პრიორიტეტი</label>{{ form.priority }}</div>
+    </div>
+
+    <div class="grid grid-cols-3 gap-4">
+      <div><label class="field-label">სავარაუდო ღირებულება *</label>{{ form.estimated_cost }}
+        {% if form.estimated_cost.errors %}<p class="text-xs text-red-600 mt-1">{{ form.estimated_cost.errors|join:", " }}</p>{% endif %}
+      </div>
+      <div><label class="field-label">ვალუტა</label>{{ form.currency }}</div>
+      <div><label class="field-label">რაოდენობა</label>{{ form.quantity }}</div>
+    </div>
+
+    <div class="grid grid-cols-2 gap-4">
+      <div><label class="field-label">მომწოდებლის სახელი</label>{{ form.vendor_name }}</div>
+      <div><label class="field-label">საჭიროა თარიღამდე</label>{{ form.required_by_date }}</div>
+      <div><label class="field-label">მომწოდებლის URL</label>{{ form.vendor_url }}</div>
+      <div><label class="field-label">პროდუქტის / სერვისის URL</label>{{ form.product_url }}</div>
+    </div>
+
+    <div>
+      <label class="field-label">ბიზნეს დასაბუთება *</label>
+      {{ form.business_justification }}
+      <p class="text-xs text-gray-500 mt-1">ახსენით, რატომ არის ეს საჭირო — დამტკიცებლები ამას ნახავენ.</p>
+    </div>
+    <div>
+      <label class="field-label">შენიშვნები</label>
+      {{ form.notes }}
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+      {{ form.is_confidential }} მონიშნეთ როგორც კონფიდენციალური (მხოლოდ თქვენ, დამტკიცებლები, ადმინისტრატორები და უფროსი მენეჯმენტი ნახავენ)
+    </label>
+
+    <div class="flex gap-3 pt-2">
+      <button type="submit" class="btn btn-primary">შენახვა{% if is_new %} მონახაზად{% endif %}</button>
+      <a href="{% if obj %}{% url 'request_detail' obj.pk %}{% else %}{% url 'request_list' %}{% endif %}" class="btn btn-secondary">გაუქმება</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

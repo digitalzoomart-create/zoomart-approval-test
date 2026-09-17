@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block title %}დეშბორდი — Zoomart მოთხოვნები{% endblock %}
+{% block content %}
+<h1 class="text-xl font-semibold mb-1">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
+<p class="text-sm text-gray-500 mb-6">აი, რა ხდება თქვენს მოთხოვნებთან დაკავშირებით დღეს.</p>
+
+<section class="mb-8">
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ჩემი მოთხოვნები</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ my_draft }}</div><div class="text-sm text-gray-500">მონახაზი</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-amber-600">{{ my_pending }}</div><div class="text-sm text-gray-500">მოლოდინში</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-emerald-600">{{ my_approved }}</div><div class="text-sm text-gray-500">დამტკიცებული</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-red-600">{{ my_rejected }}</div><div class="text-sm text-gray-500">უარყოფილი</div></div>
+  </div>
+  <div class="card mt-4 divide-y divide-gray-100">
+    {% for r in my_recent %}
+    <a href="{% url 'request_detail' r.pk %}" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50">
+      <div>
+        <div class="text-sm font-medium">{{ r.title }}</div>
+        <div class="text-xs text-gray-500">{{ r.request_number }} &middot; {{ r.estimated_cost }} {{ r.currency }}</div>
+      </div>
+      <span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span>
+    </a>
+    {% empty %}
+    <div class="px-4 py-6 text-sm text-gray-500 text-center">ჯერ არ გაქვთ მოთხოვნები — <a href="{% url 'request_create' %}" class="text-brand-600 underline">შექმენით პირველი</a>.</div>
+    {% endfor %}
+  </div>
+</section>
+
+{% if approvals_waiting is not None %}
+<section class="mb-8">
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ჩემი დამტკიცების მოლოდინში ({{ approvals_waiting }})</h2>
+  <div class="card divide-y divide-gray-100">
+    {% for a in approvals_recent %}
+    <a href="{% url 'request_detail' a.request.pk %}" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50">
+      <div>
+        <div class="text-sm font-medium">{{ a.request.title }}</div>
+        <div class="text-xs text-gray-500">{{ a.request.request_number }} &middot; {{ a.request.requester }} &middot; {{ a.request.estimated_cost }} {{ a.request.currency }}</div>
+      </div>
+      <span class="badge badge-yellow">{{ a.get_approver_role_display }}</span>
+    </a>
+    {% empty %}
+    <div class="px-4 py-6 text-sm text-gray-500 text-center">თქვენი დამტკიცების მოლოდინში არაფერია.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{% if finance_awaiting is not None %}
+<section class="mb-8">
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ფინანსები</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_awaiting }}</div><div class="text-sm text-gray-500">ფინანსების მოლოდინში</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_in_progress }}</div><div class="text-sm text-gray-500">შესყიდვა მიმდინარეობს</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_awaiting_payment }}</div><div class="text-sm text-gray-500">გადახდის მოლოდინში</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_paid_this_month|floatformat:0 }}</div><div class="text-sm text-gray-500">გადახდილი (სულ, GEL)</div></div>
+  </div>
+</section>
+{% endif %}
+
+{% if mgmt_total_requested is not None %}
+<section class="mb-8">
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">მენეჯმენტის მიმოხილვა</h2>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div class="stat-card"><div class="text-2xl font-semibold">{{ mgmt_total_requested|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ მოთხოვნილი</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-emerald-600">{{ mgmt_total_approved|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ დამტკიცებული</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-blue-600">{{ mgmt_total_paid|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ გადახდილი</div></div>
+    <div class="stat-card"><div class="text-2xl font-semibold text-amber-600">{{ mgmt_pending_amount|floatformat:0 }}</div><div class="text-sm text-gray-500">დამტკიცების მოლოდინში (თანხა)</div></div>
+  </div>
+  <div class="grid md:grid-cols-3 gap-4">
+    <div class="card p-4">
+      <div class="text-sm font-medium mb-2">ხარჯები დეპარტამენტების მიხედვით</div>
+      {% for d in mgmt_by_department %}
+        <div class="flex justify-between text-sm py-1"><span class="text-gray-600">{{ d.department__name|default:"—" }}</span><span class="font-medium">{{ d.total|floatformat:0 }}</span></div>
+      {% endfor %}
+    </div>
+    <div class="card p-4">
+      <div class="text-sm font-medium mb-2">ხარჯები კატეგორიების მიხედვით</div>
+      {% for c in mgmt_by_category %}
+        <div class="flex justify-between text-sm py-1"><span class="text-gray-600">{{ c.category__name|default:"—" }}</span><span class="font-medium">{{ c.total|floatformat:0 }}</span></div>
+      {% endfor %}
+    </div>
+    <div class="card p-4">
+      <div class="text-sm font-medium mb-2">უმსხვილესი მოთხოვნები</div>
+      {% for r in mgmt_largest %}
+        <a href="{% url 'request_detail' r.pk %}" class="flex justify-between text-sm py-1 hover:underline"><span class="text-gray-600">{{ r.title|truncatechars:22 }}</span><span class="font-medium">{{ r.estimated_cost }}</span></a>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% endif %}
+{% endblock %}
