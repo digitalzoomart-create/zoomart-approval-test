@@ -475,6 +475,43 @@ class RequestListExportTests(BaseWorkflowTestCase):
         self.assertNotContains(resp, "ექსელში გადმოწერა")
 
 
+class RequestNumberAndDateFilterTests(BaseWorkflowTestCase):
+    """Regression test for GIO's request: request numbers should encode the
+    date they were created on, and the list should be filterable by date."""
+
+    def test_request_number_encodes_todays_date(self):
+        from django.utils import timezone
+
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        expected_prefix = "REQ-" + timezone.now().strftime("%Y%m%d") + "-"
+        self.assertTrue(
+            req.request_number.startswith(expected_prefix),
+            f"expected {req.request_number} to start with {expected_prefix}",
+        )
+
+    def test_same_day_requests_get_sequential_numbers(self):
+        req1 = self._make_request(self.employee_a, self.dept_a, 300, title="First")
+        req2 = self._make_request(self.employee_a, self.dept_a, 300, title="Second")
+        seq1 = int(req1.request_number.split("-")[-1])
+        seq2 = int(req2.request_number.split("-")[-1])
+        self.assertEqual(seq2, seq1 + 1)
+
+    def test_list_can_be_filtered_by_date_range(self):
+        import datetime
+
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        client = Client()
+        client.force_login(self.employee_a)
+
+        today = datetime.date.today()
+        resp = client.get(f"/requests/?scope=mine&date_from={today.isoformat()}&date_to={today.isoformat()}")
+        self.assertContains(resp, req.request_number)
+
+        yesterday = today - datetime.timedelta(days=1)
+        resp = client.get(f"/requests/?scope=mine&date_from={yesterday.isoformat()}&date_to={yesterday.isoformat()}")
+        self.assertNotContains(resp, req.request_number)
+
+
 class RaceConditionTests(BaseWorkflowTestCase):
     def test_cannot_approve_the_same_step_twice(self):
         req = self._make_request(self.employee_a, self.dept_a, 300)

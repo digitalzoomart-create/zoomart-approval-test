@@ -4,6 +4,7 @@ from django.core.paginator import Paginator
 from django.db.models import Q, Sum
 from django.http import FileResponse, Http404
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.dateparse import parse_date
 
 from core.permissions import can_act_as_approver, can_comment, can_edit_request, can_view_request, visible_requests_qs
 from . import services
@@ -97,6 +98,8 @@ def _scoped_request_queryset(request, user):
     department = request.GET.get("department")
     category = request.GET.get("category")
     priority = request.GET.get("priority")
+    date_from = parse_date(request.GET.get("date_from") or "")
+    date_to = parse_date(request.GET.get("date_to") or "")
 
     if q:
         qs = qs.filter(
@@ -110,6 +113,10 @@ def _scoped_request_queryset(request, user):
         qs = qs.filter(category_id=category)
     if priority:
         qs = qs.filter(priority=priority)
+    if date_from:
+        qs = qs.filter(created_at__date__gte=date_from)
+    if date_to:
+        qs = qs.filter(created_at__date__lte=date_to)
 
     qs = qs.select_related("department", "category", "requester").order_by("-created_at")
 

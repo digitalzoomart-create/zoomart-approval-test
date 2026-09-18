@@ -2,8 +2,13 @@
 {% block title %}დეშბორდი — Zoomart მოთხოვნები{% endblock %}
 {% block content %}
 <h1 class="text-2xl font-bold tracking-tight mb-1">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
+{% if user.is_senior_management %}
+<p class="text-sm text-gray-500 mb-8">აი, რა ხდება კომპანიაში დღეს.</p>
+{% else %}
 <p class="text-sm text-gray-500 mb-8">აი, რა ხდება თქვენს მოთხოვნებთან დაკავშირებით დღეს.</p>
+{% endif %}
 
+{% if not user.is_senior_management %}
 <section class="mb-8">
   <h2 class="section-label mb-3">ჩემი მოთხოვნები</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -58,6 +63,7 @@
     {% endfor %}
   </div>
 </section>
+{% endif %}
 
 {% if approvals_waiting is not None %}
 <section class="mb-8">

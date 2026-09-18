@@ -17,7 +17,7 @@
   </div>
 </div>
 
-<form method="get" class="card p-4 mb-5 grid grid-cols-2 md:grid-cols-6 gap-3">
+<form method="get" class="card p-4 mb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
   <input type="hidden" name="scope" value="{{ scope }}">
   <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="ძებნა…" class="input col-span-2">
   <select name="status" class="input">
@@ -36,7 +36,20 @@
     <option value="">ყველა პრიორიტეტი</option>
     {% for value, label in priorities %}<option value="{{ value }}" {% if request.GET.priority == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
-  <div class="col-span-2 md:col-span-6"><button class="btn btn-secondary">ფილტრის გამოყენება</button></div>
+  <div>
+    <label class="text-xs text-gray-400 mb-1 block">თარიღიდან</label>
+    <input type="date" name="date_from" value="{{ request.GET.date_from|default:'' }}" class="input">
+  </div>
+  <div>
+    <label class="text-xs text-gray-400 mb-1 block">თარიღამდე</label>
+    <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="input">
+  </div>
+  <div class="col-span-2 md:col-span-4 flex items-center gap-2">
+    <button class="btn btn-secondary">ფილტრის გამოყენება</button>
+    {% if request.GET.q or request.GET.status or request.GET.department or request.GET.category or request.GET.priority or request.GET.date_from or request.GET.date_to %}
+    <a href="?scope={{ scope }}" class="btn-ghost text-sm px-3 py-2 rounded-lg">ფილტრის გასუფთავება</a>
+    {% endif %}
+  </div>
 </form>
 
 <div class="card overflow-hidden">

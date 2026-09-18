@@ -22,12 +22,11 @@ class RequestForm(forms.ModelForm):
         fields = [
             "title", "description", "department", "category", "request_type", "priority",
             "estimated_cost", "currency", "quantity", "vendor_name", "vendor_url", "product_url",
-            "required_by_date", "business_justification", "notes",
+            "required_by_date", "business_justification",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
             "business_justification": forms.Textarea(attrs={"rows": 3}),
-            "notes": forms.Textarea(attrs={"rows": 2}),
             "required_by_date": forms.DateInput(attrs={"type": "date"}),
         }
 

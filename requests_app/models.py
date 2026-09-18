@@ -146,8 +146,11 @@ class Request(models.Model):
         super().save(*args, **kwargs)
 
     def _generate_request_number(self):
-        year = timezone.now().year
-        prefix = f"REQ-{year}-"
+        # Encodes the actual creation date (not just the year) so the
+        # number itself tells you when a request was made — e.g.
+        # REQ-20260919-001. The sequence resets each day.
+        today = timezone.now().strftime("%Y%m%d")
+        prefix = f"REQ-{today}-"
         last = (
             Request.objects.filter(request_number__startswith=prefix)
             .order_by("-request_number")
@@ -159,7 +162,7 @@ class Request(models.Model):
                 next_seq = int(last.request_number.split("-")[-1]) + 1
             except ValueError:
                 next_seq = Request.objects.filter(request_number__startswith=prefix).count() + 1
-        return f"{prefix}{next_seq:04d}"
+        return f"{prefix}{next_seq:03d}"
 
     @property
     def status_color(self):
