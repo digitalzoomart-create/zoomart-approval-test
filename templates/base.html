@@ -1,9 +1,10 @@
-{% load humanize ka_labels %}<!doctype html>
+{% load humanize ka_labels static %}<!doctype html>
 <html lang="ka">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Zoomart მოთხოვნები{% endblock %}</title>
+  <link rel="icon" type="image/svg+xml" href="{% static 'img/zoomart-icon.svg' %}">
   <link rel="stylesheet" href="/static/dist/output.css">
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen">
@@ -12,7 +13,7 @@
   <aside class="w-60 shrink-0 border-r border-gray-200 bg-white flex flex-col">
     <div class="px-5 py-5 border-b border-gray-100">
       <div class="flex items-center gap-2">
-        <div class="h-8 w-8 rounded-lg bg-brand-600 text-white grid place-items-center font-bold">Z</div>
+        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-8 w-8" alt="Zoomart">
         <div class="leading-tight">
           <div class="font-semibold text-sm">Zoomart</div>
           <div class="text-xs text-gray-500">ხარჯები და მოთხოვნები</div>
