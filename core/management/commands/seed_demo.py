@@ -9,7 +9,7 @@ from core.models import ApprovalStepRule, ApprovalWorkflowRule, Department, Requ
 from requests_app import services
 from requests_app.models import Request
 
-ROLES = ["Employee", "Manager", "Finance", "Administrator", "Senior Management"]
+ROLES = ["Employee", "Manager", "Finance", "Administrator", "Senior Management", "Procurement Manager"]
 
 CATEGORIES = [
     "საოფისე მასალები", "მაღაზიის მასალები", "შეფუთვა", "IT აღჭურვილობა",
@@ -58,6 +58,7 @@ class Command(BaseCommand):
         admin = user("admin", "Nino", "Admin", roles=["Administrator"], superuser=True)
         director = user("director", "Levan", "Beridze", roles=["Senior Management"])
         finance_user = user("finance", "Ana", "Kapanadze", roles=["Finance"])
+        procurement_manager = user("procurement", "Eka", "Chubinidze", roles=["Procurement Manager"])
         mkt_manager = user("mkt.manager", "Tamar", "Lomidze", roles=["Manager"], department=marketing)
         it_manager = user("it.manager", "Giorgi", "Tsereteli", roles=["Manager"], department=it_dept)
         retail_manager = user("retail.manager", "Nika", "Gelashvili", roles=["Manager"], department=retail)
@@ -72,22 +73,17 @@ class Command(BaseCommand):
 
         ApprovalWorkflowRule.objects.all().delete()
 
+        # Small purchases: department director's approval is enough.
         tier1 = ApprovalWorkflowRule.objects.create(name="500 ლარამდე", min_amount=0, max_amount=500, priority=10)
         ApprovalStepRule.objects.create(workflow_rule=tier1, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
 
-        tier2 = ApprovalWorkflowRule.objects.create(name="501 - 2,000 ლარი", min_amount=500.01, max_amount=2000, priority=10)
+        # Everything above that: department director -> company director -> finance.
+        # (If the department director is the one submitting, their own step is
+        # skipped automatically — see services._build_steps.)
+        tier2 = ApprovalWorkflowRule.objects.create(name="500 ლარზე მეტი", min_amount=500.01, max_amount=None, priority=10)
         ApprovalStepRule.objects.create(workflow_rule=tier2, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=tier2, order=2, approver_role=ApprovalStepRule.ROLE_FINANCE)
-
-        tier3 = ApprovalWorkflowRule.objects.create(name="2,001 - 10,000 ლარი", min_amount=2000.01, max_amount=10000, priority=10)
-        ApprovalStepRule.objects.create(workflow_rule=tier3, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=tier3, order=2, approver_role=ApprovalStepRule.ROLE_FINANCE)
-        ApprovalStepRule.objects.create(workflow_rule=tier3, order=3, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
-
-        tier4 = ApprovalWorkflowRule.objects.create(name="10,000 ლარზე მეტი", min_amount=10000.01, max_amount=None, priority=10)
-        ApprovalStepRule.objects.create(workflow_rule=tier4, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=tier4, order=2, approver_role=ApprovalStepRule.ROLE_FINANCE)
-        ApprovalStepRule.objects.create(workflow_rule=tier4, order=3, approver_role=ApprovalStepRule.ROLE_SPECIFIC_USER, specific_user=director)
+        ApprovalStepRule.objects.create(workflow_rule=tier2, order=2, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=tier2, order=3, approver_role=ApprovalStepRule.ROLE_FINANCE)
 
         cat = lambda n: RequestCategory.objects.get(name=n)
         today = datetime.date.today()
@@ -111,6 +107,7 @@ class Command(BaseCommand):
         r4 = make(employee1, marketing, "მარკეტინგი", "Instagram ინფლუენსერების კამპანია — გაზაფხული", 1800, "საგაზაფხულო კამპანია ცხოველების საკვების კატეგორიის გასაძლიერებლად.")
         services.submit_request(r4, employee1)
         services.approve(r4, mkt_manager, "შეესაბამება Q2 მარკეტინგულ გეგმას.")
+        services.approve(r4, director, "დამტკიცებულია კომპანიის დონეზე.")
         services.approve(r4, finance_user, "ბიუჯეტი ხელმისაწვდომია.")
 
         r5 = make(employee2, it_dept, "პროგრამული უზრუნველყოფა / გამოწერა", "Figma-ს გუნდური გამოწერა (წლიური)", 950, "დიზაინის გუნდს სჭირდება ერთობლივი წვდომა.")
@@ -120,10 +117,15 @@ class Command(BaseCommand):
         r6 = make(employee3, retail, "აღჭურვილობა", "სამაცივრო კამერის შეკეთება — საბურთალოს ფილიალი", 15000, "მაცივარი უმართავდება, სახიფათოა გაყინული პროდუქციის დაკარგვა.")
         services.submit_request(r6, employee3)
         services.approve(r6, retail_manager, "სასწრაფოა, დაუყოვნებლივ ვამტკიცებ.")
-        services.approve(r6, finance_user, "საგანგებო ბიუჯეტის ხაზი დამტკიცებულია.")
         services.reject(r6, director, "მოიტანეთ ორი კონკურენტული შეთავაზება, სანამ ამ მასშტაბის შეკეთებას დავამტკიცებთ.")
+
+        # Demonstrates the "department director submits their own request" case:
+        # the department-director step is skipped automatically and the request
+        # goes straight to the company director.
+        r7 = make(mkt_manager, marketing, "მარკეტინგი", "წლიური მარკეტინგული ღონისძიების სპონსორობა", 3200, "მარკეტინგის დირექტორის თავად შეტანილი მოთხოვნა — საკუთარი დეპარტამენტის დასტური საჭირო არ არის.")
+        services.submit_request(r7, mkt_manager)
 
         self.stdout.write(self.style.SUCCESS("დემო მონაცემები შეიქმნა."))
         self.stdout.write("მომხმარებლები შესასვლელად (პაროლი: Zoomart2026!) :")
-        for u in [admin, director, finance_user, mkt_manager, it_manager, retail_manager, logistics_manager, employee1, employee2, employee3]:
+        for u in [admin, director, finance_user, procurement_manager, mkt_manager, it_manager, retail_manager, logistics_manager, employee1, employee2, employee3]:
             self.stdout.write(f"  {u.username:20s} roles={','.join(u.role_names) or ('superuser' if u.is_superuser else '')}")

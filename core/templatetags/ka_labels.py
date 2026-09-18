@@ -4,10 +4,11 @@ register = template.Library()
 
 ROLE_LABELS_KA = {
     "Employee": "თანამშრომელი",
-    "Manager": "მენეჯერი",
+    "Manager": "დეპარტამენტის დირექტორი",
     "Finance": "ფინანსები",
     "Administrator": "ადმინისტრატორი",
-    "Senior Management": "უფროსი მენეჯმენტი",
+    "Senior Management": "კომპანიის დირექტორი",
+    "Procurement Manager": "შესყიდვების მენეჯერი",
 }
 
 

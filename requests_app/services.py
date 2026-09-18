@@ -8,6 +8,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from core.models import ApprovalStepRule, ApprovalWorkflowRule
+from . import notifications
 from .models import Request, RequestApproval
 
 STATUS_FOR_ROLE = {
@@ -46,14 +47,26 @@ def _build_steps(request_obj, rule):
     request_obj.approval_steps.all().delete()
     steps = []
     for step_rule in rule.steps.order_by("order"):
-        steps.append(
-            RequestApproval(
-                request=request_obj,
-                step_order=step_rule.order,
-                approver_role=step_rule.approver_role,
-                assigned_to=_resolve_assigned_to(step_rule, request_obj),
-            )
+        assigned_to = _resolve_assigned_to(step_rule, request_obj)
+        step = RequestApproval(
+            request=request_obj,
+            step_order=step_rule.order,
+            approver_role=step_rule.approver_role,
+            assigned_to=assigned_to,
         )
+        # If this step's approver would be the requester themselves (e.g. the
+        # department director submits their own request), that step is not
+        # skipped just at approval-time (they could never approve their own
+        # request anyway) — it is bypassed entirely, up front, so the chain
+        # moves straight on to the next approver instead of getting stuck.
+        if assigned_to is not None and assigned_to.id == request_obj.requester_id:
+            step.decision = RequestApproval.DECISION_SKIPPED
+            step.comment = (
+                "ავტომატურად გამოტოვებულია — მოთხოვნის ავტორი თავად არის "
+                "ამ საფეხურის დამტკიცებელი."
+            )
+            step.decided_at = timezone.now()
+        steps.append(step)
     RequestApproval.objects.bulk_create(steps)
 
 
@@ -66,7 +79,8 @@ def _activate_next_step(request_obj):
         .order_by("step_order")
         .first()
     )
-    if next_step is not None and next_step.decision == RequestApproval.DECISION_NOT_STARTED:
+    newly_activated = next_step is not None and next_step.decision == RequestApproval.DECISION_NOT_STARTED
+    if newly_activated:
         next_step.decision = RequestApproval.DECISION_PENDING
         next_step.save()
     if next_step is None:
@@ -78,6 +92,8 @@ def _activate_next_step(request_obj):
         request_obj.current_approver = next_step.assigned_to
         request_obj.current_approver_role = next_step.approver_role
     request_obj.save()
+    if newly_activated:
+        notifications.notify_step_activated(request_obj, next_step)
 
 
 def submit_request(request_obj, actor):

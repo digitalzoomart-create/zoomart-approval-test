@@ -11,7 +11,7 @@ class Department(models.Model):
         blank=True,
         on_delete=models.SET_NULL,
         related_name="managed_departments",
-        help_text="This person is the 'Department Manager' approver for requests from this department.",
+        help_text="ეს პირია ამ დეპარტამენტის 'დეპარტამენტის დირექტორი' — ამტკიცებს ამ დეპარტამენტის მოთხოვნებს (თუ თავად არის მომთხოვნელი, ეს საფეხური ავტომატურად გამოტოვდება).",
     )
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -105,9 +105,9 @@ class ApprovalStepRule(models.Model):
     ROLE_SENIOR_MANAGER = "SENIOR_MANAGER"
     ROLE_SPECIFIC_USER = "SPECIFIC_USER"
     ROLE_CHOICES = [
-        (ROLE_DEPARTMENT_MANAGER, "დეპარტამენტის მენეჯერი"),
+        (ROLE_DEPARTMENT_MANAGER, "დეპარტამენტის დირექტორი"),
         (ROLE_FINANCE, "ფინანსები"),
-        (ROLE_SENIOR_MANAGER, "უფროსი მენეჯერი / დირექტორი"),
+        (ROLE_SENIOR_MANAGER, "კომპანიის დირექტორი"),
         (ROLE_SPECIFIC_USER, "კონკრეტული პირი"),
     ]
 

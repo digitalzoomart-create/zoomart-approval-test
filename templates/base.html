@@ -33,7 +33,7 @@
       {% if user.is_finance or user.is_admin_role %}
       <a href="{% url 'request_list' %}?scope=finance" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ფინანსები</a>
       {% endif %}
-      {% if user.is_senior_management or user.is_admin_role %}
+      {% if user.is_senior_management or user.is_admin_role or user.is_procurement_manager %}
       <a href="{% url 'request_list' %}?scope=all" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">რეპორტები / ყველა მოთხოვნა</a>
       {% endif %}
       {% if user.is_admin_role %}

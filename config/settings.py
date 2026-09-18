@@ -116,3 +116,24 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = MAX_ATTACHMENT_SIZE_MB * 1024 * 1024 + 1024 * 1024
 # in the ApprovalWorkflowRule / ApprovalStepRule tables (core app).
 
 MESSAGE_TAGS = {}
+
+# --- Email (approval-step notifications) --------------------------------
+# Off by default (console backend = nothing actually sent, just logged) so
+# the app keeps working with zero configuration. To turn on real email,
+# set EMAIL_HOST_USER / EMAIL_HOST_PASSWORD as environment variables
+# (e.g. a Gmail address + an "App Password" for it) and the SMTP backend
+# activates automatically — no code changes needed.
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_BACKEND = (
+    "django.core.mail.backends.smtp.EmailBackend"
+    if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD
+    else "django.core.mail.backends.console.EmailBackend"
+)
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env("EMAIL_PORT", default=587, cast=int)
+EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True, cast=bool)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "noreply@zoomart.ge")
+
+# Used to build absolute links (e.g. "ნახეთ მოთხოვნა") inside notification emails.
+SITE_URL = env("SITE_URL", default="http://localhost:8000")

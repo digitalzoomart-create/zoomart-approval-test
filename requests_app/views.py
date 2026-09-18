@@ -39,7 +39,7 @@ def dashboard(request):
             .aggregate(total=Sum("actual_cost"))["total"] or 0
         )
 
-    if user.is_senior_management or user.is_admin_role:
+    if user.is_senior_management or user.is_admin_role or user.is_procurement_manager:
         approved_like = [Request.STATUS_APPROVED, Request.STATUS_PURCHASE_IN_PROGRESS, Request.STATUS_PURCHASED, Request.STATUS_PAID, Request.STATUS_COMPLETED]
         ctx["mgmt_total_requested"] = Request.objects.exclude(status=Request.STATUS_DRAFT).aggregate(t=Sum("estimated_cost"))["t"] or 0
         ctx["mgmt_total_approved"] = Request.objects.filter(status__in=approved_like).aggregate(t=Sum("estimated_cost"))["t"] or 0
@@ -71,7 +71,7 @@ def request_list(request):
             status__in=[Request.STATUS_APPROVED, Request.STATUS_PURCHASE_IN_PROGRESS, Request.STATUS_PURCHASED, Request.STATUS_PAID]
         )
         title = "ფინანსების რიგი"
-    elif scope == "all" and (user.is_admin_role or user.is_senior_management):
+    elif scope == "all" and (user.is_admin_role or user.is_senior_management or user.is_procurement_manager):
         qs = Request.objects.all()
         title = "ყველა მოთხოვნა"
     else:

@@ -53,3 +53,7 @@ class User(AbstractUser):
     @property
     def is_employee(self):
         return self.has_role("Employee")
+
+    @property
+    def is_procurement_manager(self):
+        return self.has_role("Procurement Manager")

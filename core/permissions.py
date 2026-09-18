@@ -7,7 +7,7 @@ Central place for "who can see / do what" so it's never re-implemented
 def can_view_request(user, req):
     if not user.is_authenticated:
         return False
-    if user.is_admin_role or user.is_senior_management:
+    if user.is_admin_role or user.is_senior_management or user.is_procurement_manager:
         return True
     if req.requester_id == user.id:
         return True
@@ -54,7 +54,7 @@ def can_act_as_approver(user, req):
 def visible_requests_qs(user):
     from requests_app.models import Request
 
-    if user.is_admin_role or user.is_senior_management:
+    if user.is_admin_role or user.is_senior_management or user.is_procurement_manager:
         return Request.objects.all()
 
     from django.db.models import Q
