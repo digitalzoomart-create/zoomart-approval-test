@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% if is_new %}ახალი დეპარტამენტი{% else %}დეპარტამენტის რედაქტირება{% endif %} — Zoomart მოთხოვნები{% endblock %}
+{% block content %}
+<div class="max-w-md">
+  <h1 class="text-xl font-semibold mb-1">{% if is_new %}ახალი დეპარტამენტი{% else %}რედაქტირება — {{ obj.name }}{% endif %}</h1>
+  <p class="text-sm text-gray-500 mb-6">დეპარტამენტის დირექტორის დანიშვნა ხდება იმ ადამიანის ბარათიდან — <a href="{% url 'team_list' %}" class="text-brand-600 underline">გუნდის მართვა</a>.</p>
+
+  <form method="post" class="card p-6 space-y-5">
+    {% csrf_token %}
+    <div>
+      <label class="field-label">{{ form.name.label }} *</label>
+      {{ form.name }}
+      {% if form.name.errors %}<p class="text-xs text-red-600 mt-1">{{ form.name.errors|join:", " }}</p>{% endif %}
+    </div>
+    <label class="flex items-center gap-2 text-sm">
+      {{ form.is_active }} აქტიურია (გამორთვისას აღარ გამოჩნდება ახალი მოთხოვნის შექმნისას)
+    </label>
+    <div class="flex gap-3 pt-2">
+      <button type="submit" class="btn btn-primary">შენახვა</button>
+      <a href="{% url 'team_list' %}" class="btn btn-secondary">გაუქმება</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

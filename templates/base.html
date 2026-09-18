@@ -37,7 +37,8 @@
       <a href="{% url 'request_list' %}?scope=all" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">რეპორტები / ყველა მოთხოვნა</a>
       {% endif %}
       {% if user.is_admin_role %}
-      <a href="/admin/" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ადმინისტრირება</a>
+      <a href="{% url 'team_list' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name in 'team_list,person_create,person_edit,department_create,department_edit' %}bg-gray-100 font-medium{% endif %}">გუნდის მართვა</a>
+      <a href="/admin/" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ადმინისტრირება (გაფართოებული)</a>
       {% endif %}
     </nav>
     <div class="px-4 py-4 border-t border-gray-100 text-xs text-gray-500">

@@ -1,0 +1,48 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:"Zoomart ადმინი" }}{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+  :root {
+    --primary: #00734d;
+    --secondary: #00b274;
+    --accent: #2b8ec8;
+    --primary-fg: #fff;
+    --header-color: #fff;
+    --header-branding-color: #fff;
+    --header-bg: #101820;
+    --header-link-color: #fff;
+    --selected-bg: #e6faf1;
+    --selected-row: #e6faf1;
+    --button-bg: #00734d;
+    --button-hover-bg: #00b274;
+    --default-button-bg: #00734d;
+    --default-button-hover-bg: #00b274;
+    --object-tools-bg: #00734d;
+    --object-tools-hover-bg: #00b274;
+  }
+  #header { background: var(--header-bg); }
+  #branding img { height: 22px; vertical-align: middle; margin-right: 8px; }
+  a:link, a:visited { color: #00734d; }
+  .module h2, .module caption, .inline-group h2 { background: #101820; }
+  div.breadcrumbs { background: #00734d; }
+</style>
+{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+  <a href="{% url 'admin:index' %}">
+    <img src="{% static 'img/zoomart-icon.svg' %}" alt="Zoomart">{{ site_header|default:"Zoomart ადმინისტრირება" }}
+  </a>
+</div>
+{% if user.is_anonymous %}
+  {% include "admin/color_theme_toggle.html" %}
+{% endif %}
+{% endblock %}
+
+{% block nav-global %}
+<a href="{% url 'team_list' %}" style="color:#fff;margin-left:1rem;">&larr; გუნდის მარტივი მართვა</a>
+{% endblock %}

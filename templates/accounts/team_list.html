@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% load ka_labels %}
+{% block title %}გუნდის მართვა — Zoomart მოთხოვნები{% endblock %}
+{% block content %}
+<div class="flex items-center justify-between mb-1">
+  <h1 class="text-xl font-semibold">გუნდის მართვა</h1>
+</div>
+<p class="text-sm text-gray-500 mb-6">აქ დაამატებთ თანამშრომლებს, დაავანიშნავთ დეპარტამენტის დირექტორებს და მართავთ როლებს — მარტივად, ერთ გვერდზე.</p>
+
+<div class="flex gap-3 mb-8">
+  <a href="{% url 'person_create' %}" class="btn btn-primary">+ ახალი თანამშრომელი</a>
+  <a href="{% url 'department_create' %}" class="btn btn-secondary">+ ახალი დეპარტამენტი</a>
+  <a href="/admin/" class="btn btn-secondary ml-auto">დამატებითი პარამეტრები (გაფართოებული)</a>
+</div>
+
+{% for dept in departments %}
+<section class="mb-6">
+  <div class="card p-5">
+    <div class="flex items-center justify-between mb-3">
+      <div>
+        <h2 class="font-semibold">{{ dept.name }}</h2>
+        {% if dept.manager %}
+          <p class="text-sm text-gray-500">დირექტორი: <span class="font-medium text-gray-700">{{ dept.manager.get_full_name|default:dept.manager.username }}</span></p>
+        {% else %}
+          <p class="text-sm text-amber-600">დირექტორი ჯერ არ არის დანიშნული — ამ დეპარტამენტს ვერავინ დაუმტკიცებს მოთხოვნებს.</p>
+        {% endif %}
+      </div>
+      <a href="{% url 'department_edit' dept.pk %}" class="text-sm text-brand-600 hover:underline">დეპარტამენტის რედაქტირება</a>
+    </div>
+    <div class="divide-y divide-gray-100 -mx-5">
+      {% for person in dept.members.all %}
+      <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
+        <div class="flex items-center gap-3">
+          <div>
+            <div class="text-sm font-medium">{{ person.get_full_name|default:person.username }}{% if person.pk == dept.manager_id %} <span class="text-xs text-gray-400">(დირექტორი)</span>{% endif %}</div>
+            <div class="text-xs text-gray-500">{{ person.username }}{% if person.email %} &middot; {{ person.email }}{% endif %}</div>
+          </div>
+        </div>
+        <div class="flex items-center gap-3">
+          <span class="badge badge-{{ person.primary_role|role_badge }}">{{ person.primary_role|role_ka }}</span>
+          {% if not person.is_active %}<span class="badge badge-gray">არააქტიური</span>{% endif %}
+          <a href="{% url 'person_edit' person.pk %}" class="text-sm text-brand-600 hover:underline">რედაქტირება</a>
+          <form method="post" action="{% url 'person_toggle_active' person.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="text-sm {% if person.is_active %}text-red-600{% else %}text-emerald-600{% endif %} hover:underline">{% if person.is_active %}დეაქტივაცია{% else %}გააქტიურება{% endif %}</button>
+          </form>
+        </div>
+      </div>
+      {% empty %}
+      <div class="px-5 py-4 text-sm text-gray-500">ამ დეპარტამენტში ჯერ არავინაა დამატებული.</div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+{% empty %}
+<p class="text-sm text-gray-500 mb-6">ჯერ არცერთი დეპარტამენტი არ გაქვთ — დაამატეთ ზემოთ ღილაკით.</p>
+{% endfor %}
+
+<section>
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">კომპანიის მასშტაბის როლები</h2>
+  <p class="text-xs text-gray-500 mb-3">ფინანსები, კომპანიის დირექტორი, შესყიდვების მენეჯერი და ადმინისტრატორები — დეპარტამენტს არ საჭიროებენ.</p>
+  <div class="card divide-y divide-gray-100">
+    {% for person in company_wide %}
+    <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
+      <div>
+        <div class="text-sm font-medium">{{ person.get_full_name|default:person.username }}</div>
+        <div class="text-xs text-gray-500">{{ person.username }}{% if person.email %} &middot; {{ person.email }}{% endif %}</div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="badge badge-{{ person.primary_role|role_badge }}">{{ person.primary_role|role_ka }}</span>
+        {% if not person.is_active %}<span class="badge badge-gray">არააქტიური</span>{% endif %}
+        <a href="{% url 'person_edit' person.pk %}" class="text-sm text-brand-600 hover:underline">რედაქტირება</a>
+        <form method="post" action="{% url 'person_toggle_active' person.pk %}">
+          {% csrf_token %}
+          <button type="submit" class="text-sm {% if person.is_active %}text-red-600{% else %}text-emerald-600{% endif %} hover:underline">{% if person.is_active %}დეაქტივაცია{% else %}გააქტიურება{% endif %}</button>
+        </form>
+      </div>
+    </div>
+    {% empty %}
+    <div class="px-5 py-4 text-sm text-gray-500">ჯერ არავინაა დამატებული.</div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

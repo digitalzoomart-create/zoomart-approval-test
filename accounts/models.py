@@ -35,6 +35,11 @@ class User(AbstractUser):
         return list(self.groups.values_list("name", flat=True))
 
     @property
+    def primary_role(self):
+        names = self.role_names
+        return names[0] if names else ""
+
+    @property
     def is_manager(self):
         return self.has_role("Manager")
 
