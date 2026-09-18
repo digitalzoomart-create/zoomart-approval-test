@@ -60,7 +60,7 @@
 
 {% if mgmt_total_requested is not None %}
 <section class="mb-8">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">მენეჯმენტის მიმოხილვა</h2>
+  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ხარჯების ანალიტიკა</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
     <div class="stat-card"><div class="text-2xl font-semibold">{{ mgmt_total_requested|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ მოთხოვნილი</div></div>
     <div class="stat-card"><div class="text-2xl font-semibold text-emerald-600">{{ mgmt_total_approved|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ დამტკიცებული</div></div>

@@ -24,7 +24,7 @@
       <a href="{% url 'dashboard' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-100 font-medium{% endif %}">დეშბორდი</a>
       <a href="{% url 'request_create' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name == 'request_create' %}bg-gray-100 font-medium{% endif %}">+ ახალი მოთხოვნა</a>
       <a href="{% url 'request_list' %}?scope=mine" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.GET.scope == 'mine' or request.GET.scope is None and request.resolver_match.url_name == 'request_list' %}bg-gray-100 font-medium{% endif %}">ჩემი მოთხოვნები</a>
-      {% if user.is_manager or user.is_finance or user.is_senior_management or user.is_admin_role %}
+      {% if user.is_manager or user.is_senior_management or user.is_admin_role %}
       <a href="{% url 'request_list' %}?scope=approvals" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-100">
         <span>დასამტკიცებელი</span>
         {% if nav_pending_approvals_count %}<span class="badge badge-yellow">{{ nav_pending_approvals_count }}</span>{% endif %}
@@ -33,7 +33,7 @@
       {% if user.is_finance or user.is_admin_role %}
       <a href="{% url 'request_list' %}?scope=finance" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ფინანსები</a>
       {% endif %}
-      {% if user.is_senior_management or user.is_admin_role or user.is_procurement_manager %}
+      {% if user.is_senior_management or user.is_admin_role or user.is_procurement_manager or user.is_finance %}
       <a href="{% url 'request_list' %}?scope=all" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">რეპორტები / ყველა მოთხოვნა</a>
       {% endif %}
       {% if user.is_admin_role %}

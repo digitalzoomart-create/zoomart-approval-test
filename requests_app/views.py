@@ -25,7 +25,7 @@ def dashboard(request):
         "my_recent": my_requests.order_by("-updated_at")[:6],
     }
 
-    if user.is_manager or user.is_admin_role or user.is_finance or user.is_senior_management:
+    if user.is_manager or user.is_admin_role or user.is_senior_management:
         pending_qs = RequestApproval.objects.pending_for_user(user)
         ctx["approvals_waiting"] = pending_qs.count()
         ctx["approvals_recent"] = pending_qs.order_by("created_at")[:6]
@@ -39,7 +39,7 @@ def dashboard(request):
             .aggregate(total=Sum("actual_cost"))["total"] or 0
         )
 
-    if user.is_senior_management or user.is_admin_role or user.is_procurement_manager:
+    if user.is_senior_management or user.is_admin_role or user.is_procurement_manager or user.is_finance:
         approved_like = [Request.STATUS_APPROVED, Request.STATUS_PURCHASE_IN_PROGRESS, Request.STATUS_PURCHASED, Request.STATUS_PAID, Request.STATUS_COMPLETED]
         ctx["mgmt_total_requested"] = Request.objects.exclude(status=Request.STATUS_DRAFT).aggregate(t=Sum("estimated_cost"))["t"] or 0
         ctx["mgmt_total_approved"] = Request.objects.filter(status__in=approved_like).aggregate(t=Sum("estimated_cost"))["t"] or 0
@@ -68,9 +68,12 @@ def request_list(request):
         title = "ჩემი დამტკიცების მოლოდინში"
     elif scope == "finance":
         qs = visible_requests_qs(user).filter(
-            status__in=[Request.STATUS_APPROVED, Request.STATUS_PURCHASE_IN_PROGRESS, Request.STATUS_PURCHASED, Request.STATUS_PAID]
+            status__in=[
+                Request.STATUS_APPROVED, Request.STATUS_PURCHASE_IN_PROGRESS, Request.STATUS_PURCHASED,
+                Request.STATUS_PAID, Request.STATUS_COMPLETED,
+            ]
         )
-        title = "ფინანსების რიგი"
+        title = "ფინანსების რიგი — შესასრულებელი და შესრულებული"
     elif scope == "all" and (user.is_admin_role or user.is_senior_management or user.is_procurement_manager):
         qs = Request.objects.all()
         title = "ყველა მოთხოვნა"

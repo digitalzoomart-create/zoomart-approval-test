@@ -77,13 +77,15 @@ class Command(BaseCommand):
         tier1 = ApprovalWorkflowRule.objects.create(name="500 ლარამდე", min_amount=0, max_amount=500, priority=10)
         ApprovalStepRule.objects.create(workflow_rule=tier1, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
 
-        # Everything above that: department director -> company director -> finance.
+        # Everything above that: department director -> company director.
+        # Once the company director approves, the request is fully APPROVED —
+        # Finance does not re-approve it, they just execute the purchase
+        # (see the finance execution steps below and services.mark_*).
         # (If the department director is the one submitting, their own step is
         # skipped automatically — see services._build_steps.)
         tier2 = ApprovalWorkflowRule.objects.create(name="500 ლარზე მეტი", min_amount=500.01, max_amount=None, priority=10)
         ApprovalStepRule.objects.create(workflow_rule=tier2, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
         ApprovalStepRule.objects.create(workflow_rule=tier2, order=2, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=tier2, order=3, approver_role=ApprovalStepRule.ROLE_FINANCE)
 
         cat = lambda n: RequestCategory.objects.get(name=n)
         today = datetime.date.today()
@@ -104,11 +106,18 @@ class Command(BaseCommand):
         services.submit_request(r3, employee3)
         services.approve(r3, retail_manager, "გამართლებულია, ვამტკიცებ.")
 
+        # Demonstrates the full lifecycle: once the company director approves,
+        # the request is APPROVED outright — Finance doesn't re-approve it,
+        # they just execute (comment if needed, then purchase -> paid -> done).
         r4 = make(employee1, marketing, "მარკეტინგი", "Instagram ინფლუენსერების კამპანია — გაზაფხული", 1800, "საგაზაფხულო კამპანია ცხოველების საკვების კატეგორიის გასაძლიერებლად.")
         services.submit_request(r4, employee1)
         services.approve(r4, mkt_manager, "შეესაბამება Q2 მარკეტინგულ გეგმას.")
         services.approve(r4, director, "დამტკიცებულია კომპანიის დონეზე.")
-        services.approve(r4, finance_user, "ბიუჯეტი ხელმისაწვდომია.")
+        r4.comments.create(author=finance_user, message="ბიუჯეტი ხელმისაწვდომია, ვიწყებთ შესყიდვას.")
+        services.mark_purchase_in_progress(r4, finance_user)
+        services.mark_purchased(r4, finance_user)
+        services.mark_paid(r4, finance_user, actual_amount=1750, invoice_number="INV-2026-0041", payment_date=today, notes="გადაცემულია მარკეტინგისთვის.")
+        services.mark_completed(r4, finance_user)
 
         r5 = make(employee2, it_dept, "პროგრამული უზრუნველყოფა / გამოწერა", "Figma-ს გუნდური გამოწერა (წლიური)", 950, "დიზაინის გუნდს სჭირდება ერთობლივი წვდომა.")
         services.submit_request(r5, employee2)
@@ -124,6 +133,13 @@ class Command(BaseCommand):
         # goes straight to the company director.
         r7 = make(mkt_manager, marketing, "მარკეტინგი", "წლიური მარკეტინგული ღონისძიების სპონსორობა", 3200, "მარკეტინგის დირექტორის თავად შეტანილი მოთხოვნა — საკუთარი დეპარტამენტის დასტური საჭირო არ არის.")
         services.submit_request(r7, mkt_manager)
+
+        # Fully approved, sitting in Finance's queue waiting to be purchased —
+        # shows what an untouched "to execute" item looks like.
+        r8 = make(employee2, it_dept, "IT აღჭურვილობა", "მონიტორები — 4 ცალი დიზაინის გუნდისთვის", 2400, "მიმდინარე მონიტორები მოძველებულია, ანელებს მუშაობას.")
+        services.submit_request(r8, employee2)
+        services.approve(r8, it_manager, "საჭირო აღჭურვილობაა.")
+        services.approve(r8, director, "დამტკიცებულია.")
 
         self.stdout.write(self.style.SUCCESS("დემო მონაცემები შეიქმნა."))
         self.stdout.write("მომხმარებლები შესასვლელად (პაროლი: Zoomart2026!) :")

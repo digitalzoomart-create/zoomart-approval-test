@@ -42,11 +42,12 @@ class BaseWorkflowTestCase(TestCase):
         low = ApprovalWorkflowRule.objects.create(name="Low", min_amount=0, max_amount=500)
         ApprovalStepRule.objects.create(workflow_rule=low, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
 
-        # Everything above: department director -> company director -> finance.
+        # Everything above: department director -> company director. Once the
+        # director approves, the request is fully APPROVED — Finance executes
+        # it (purchase/paid/completed) but does not re-approve it.
         standard = ApprovalWorkflowRule.objects.create(name="Standard", min_amount=500.01, max_amount=None)
         ApprovalStepRule.objects.create(workflow_rule=standard, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
         ApprovalStepRule.objects.create(workflow_rule=standard, order=2, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=standard, order=3, approver_role=ApprovalStepRule.ROLE_FINANCE)
 
     def _make_user(self, username, roles, department=None):
         u = User.objects.create_user(username=username, password="pass12345", department=department)
@@ -72,7 +73,7 @@ class ApprovalRoutingTests(BaseWorkflowTestCase):
         req.refresh_from_db()
         self.assertEqual(req.status, Request.STATUS_APPROVED, "single-step chain should be fully approved")
 
-    def test_mid_amount_needs_manager_then_director_then_finance(self):
+    def test_mid_amount_needs_manager_then_director_then_becomes_approved(self):
         req = self._make_request(self.employee_a, self.dept_a, 1500)
         services.submit_request(req, self.employee_a)
         req.refresh_from_db()
@@ -84,13 +85,12 @@ class ApprovalRoutingTests(BaseWorkflowTestCase):
 
         services.approve(req, self.director, "ok")
         req.refresh_from_db()
-        self.assertEqual(req.status, Request.STATUS_PENDING_FINANCE, "must reach Finance only after the company director approved")
+        self.assertEqual(
+            req.status, Request.STATUS_APPROVED,
+            "the company director's approval is final — Finance does not re-approve it",
+        )
 
-        services.approve(req, self.finance_user, "ok")
-        req.refresh_from_db()
-        self.assertEqual(req.status, Request.STATUS_APPROVED)
-
-    def test_high_amount_needs_all_three_steps(self):
+    def test_high_amount_needs_both_approval_steps(self):
         req = self._make_request(self.employee_a, self.dept_a, 25000)
         services.submit_request(req, self.employee_a)
         services.approve(req, self.manager_a, "ok")
@@ -98,10 +98,36 @@ class ApprovalRoutingTests(BaseWorkflowTestCase):
         self.assertEqual(req.status, Request.STATUS_PENDING_SENIOR)
         services.approve(req, self.director, "ok")
         req.refresh_from_db()
-        self.assertEqual(req.status, Request.STATUS_PENDING_FINANCE)
-        services.approve(req, self.finance_user, "ok")
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+
+    def test_finance_never_has_a_pending_approval_step(self):
+        req = self._make_request(self.employee_a, self.dept_a, 25000)
+        services.submit_request(req, self.employee_a)
+        services.approve(req, self.manager_a, "ok")
+        services.approve(req, self.director, "ok")
         req.refresh_from_db()
         self.assertEqual(req.status, Request.STATUS_APPROVED)
+        self.assertFalse(
+            req.approval_steps.filter(approver_role=ApprovalStepRule.ROLE_FINANCE).exists(),
+            "the default workflow no longer includes a Finance approval step at all",
+        )
+
+    def test_finance_can_execute_but_not_approve_once_request_is_approved(self):
+        req = self._make_request(self.employee_a, self.dept_a, 25000)
+        services.submit_request(req, self.employee_a)
+        services.approve(req, self.manager_a, "ok")
+        services.approve(req, self.director, "ok")
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+
+        # Finance has nothing to "approve" — the request is already approved —
+        # but they can still execute the purchase lifecycle.
+        with self.assertRaises(services.ApprovalError):
+            services.approve(req, self.finance_user, "trying to approve anyway")
+
+        services.mark_purchase_in_progress(req, self.finance_user)
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_PURCHASE_IN_PROGRESS)
 
 
 class SelfSubmissionSkipTests(BaseWorkflowTestCase):
@@ -118,7 +144,7 @@ class SelfSubmissionSkipTests(BaseWorkflowTestCase):
 
         services.approve(req, self.director, "ok")
         req.refresh_from_db()
-        self.assertEqual(req.status, Request.STATUS_PENDING_FINANCE)
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
 
     def test_department_director_submitting_own_small_request_auto_approves(self):
         # Only step in this tier is the department director's own — with
@@ -223,8 +249,8 @@ class RejectionAndInfoRequestTests(BaseWorkflowTestCase):
         self.assertEqual(req.status, Request.STATUS_REJECTED)
         remaining = req.approval_steps.filter(decision=RequestApproval.DECISION_PENDING)
         self.assertEqual(remaining.count(), 0, "no step should still be pending after a rejection")
-        finance_step = req.approval_steps.get(approver_role=ApprovalStepRule.ROLE_FINANCE)
-        self.assertEqual(finance_step.decision, RequestApproval.DECISION_SKIPPED)
+        senior_step = req.approval_steps.get(approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
+        self.assertEqual(senior_step.decision, RequestApproval.DECISION_SKIPPED)
 
     def test_more_info_then_resubmit_returns_to_same_step(self):
         req = self._make_request(self.employee_a, self.dept_a, 300)
@@ -297,23 +323,39 @@ class PendingForUserTests(BaseWorkflowTestCase):
     """Regression test: a future (not-yet-reached) step must not show up as
     'waiting for my approval' just because it defaults to a pending-like state."""
 
-    def test_future_finance_step_does_not_appear_before_company_director_has_acted(self):
-        req = self._make_request(self.employee_a, self.dept_a, 5000)  # needs Manager -> Senior -> Finance
+    def test_future_step_does_not_appear_before_the_current_one_is_decided(self):
+        # A Finance approval step is no longer part of the default seeded
+        # workflow (Finance executes but doesn't approve — see
+        # ApprovalRoutingTests), but ApprovalStepRule still supports one for
+        # admins who want it, so this regression case builds its own 3-step
+        # rule locally to keep covering that underlying engine behavior.
+        custom_category = RequestCategory.objects.create(name="Custom rule category")
+        rule = ApprovalWorkflowRule.objects.create(
+            name="Manager-Finance-Senior", category=custom_category, min_amount=0, max_amount=None, priority=100,
+        )
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=2, approver_role=ApprovalStepRule.ROLE_FINANCE)
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=3, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
+
+        req = Request.objects.create(
+            requester=self.employee_a, department=self.dept_a, category=custom_category,
+            title="Custom rule request", description="desc", business_justification="because", estimated_cost=5000,
+        )
         services.submit_request(req, self.employee_a)
         services.approve(req, self.manager_a, "ok")
         req.refresh_from_db()
-        self.assertEqual(req.status, Request.STATUS_PENDING_SENIOR)
-
-        finance_queue = RequestApproval.objects.pending_for_user(self.finance_user)
-        self.assertNotIn(
-            req.pk,
-            finance_queue.values_list("request_id", flat=True),
-            "the Finance step exists in the DB already but is not active yet, "
-            "so it must not appear in Finance's queue while the company director is still pending",
-        )
+        self.assertEqual(req.status, Request.STATUS_PENDING_FINANCE)
 
         director_queue = RequestApproval.objects.pending_for_user(self.director)
-        self.assertIn(req.pk, director_queue.values_list("request_id", flat=True))
+        self.assertNotIn(
+            req.pk,
+            director_queue.values_list("request_id", flat=True),
+            "the company-director step exists in the DB already but is not active yet, "
+            "so it must not appear in their queue while Finance's step is still pending",
+        )
+
+        finance_queue = RequestApproval.objects.pending_for_user(self.finance_user)
+        self.assertIn(req.pk, finance_queue.values_list("request_id", flat=True))
 
 
 class RaceConditionTests(BaseWorkflowTestCase):
