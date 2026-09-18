@@ -22,7 +22,7 @@ class RequestForm(forms.ModelForm):
         fields = [
             "title", "description", "department", "category", "request_type", "priority",
             "estimated_cost", "currency", "quantity", "vendor_name", "vendor_url", "product_url",
-            "required_by_date", "business_justification", "notes", "is_confidential",
+            "required_by_date", "business_justification", "notes",
         ]
         widgets = {
             "description": forms.Textarea(attrs={"rows": 3}),
