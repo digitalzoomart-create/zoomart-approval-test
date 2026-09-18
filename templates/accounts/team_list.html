@@ -3,20 +3,20 @@
 {% block title %}გუნდის მართვა — Zoomart მოთხოვნები{% endblock %}
 {% block content %}
 <div class="flex items-center justify-between mb-1">
-  <h1 class="text-xl font-semibold">გუნდის მართვა</h1>
+  <h1 class="text-2xl font-bold tracking-tight">გუნდის მართვა</h1>
 </div>
 <p class="text-sm text-gray-500 mb-6">აქ დაამატებთ თანამშრომლებს, დაავანიშნავთ დეპარტამენტის დირექტორებს და მართავთ როლებს — მარტივად, ერთ გვერდზე.</p>
 
-<div class="flex gap-3 mb-8">
+<div class="flex flex-wrap gap-2 mb-8">
   <a href="{% url 'person_create' %}" class="btn btn-primary">+ ახალი თანამშრომელი</a>
   <a href="{% url 'department_create' %}" class="btn btn-secondary">+ ახალი დეპარტამენტი</a>
   <a href="/admin/" class="btn btn-secondary ml-auto">დამატებითი პარამეტრები (გაფართოებული)</a>
 </div>
 
 {% for dept in departments %}
-<section class="mb-6">
-  <div class="card p-5">
-    <div class="flex items-center justify-between mb-3">
+<section class="mb-5">
+  <div class="card overflow-hidden">
+    <div class="flex items-center justify-between px-5 py-4 bg-gray-50/60 border-b border-gray-50">
       <div>
         <h2 class="font-semibold">{{ dept.name }}</h2>
         {% if dept.manager %}
@@ -25,9 +25,9 @@
           <p class="text-sm text-amber-600">დირექტორი ჯერ არ არის დანიშნული — ამ დეპარტამენტს ვერავინ დაუმტკიცებს მოთხოვნებს.</p>
         {% endif %}
       </div>
-      <a href="{% url 'department_edit' dept.pk %}" class="text-sm text-brand-600 hover:underline">დეპარტამენტის რედაქტირება</a>
+      <a href="{% url 'department_edit' dept.pk %}" class="text-sm text-brand-600 font-medium hover:underline shrink-0">დეპარტამენტის რედაქტირება</a>
     </div>
-    <div class="divide-y divide-gray-100 -mx-5">
+    <div class="divide-y divide-gray-50">
       {% for person in dept.members.all %}
       <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
         <div class="flex items-center gap-3">
@@ -57,9 +57,9 @@
 {% endfor %}
 
 <section>
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">კომპანიის მასშტაბის როლები</h2>
+  <h2 class="section-label mb-3">კომპანიის მასშტაბის როლები</h2>
   <p class="text-xs text-gray-500 mb-3">ფინანსები, კომპანიის დირექტორი, შესყიდვების მენეჯერი და ადმინისტრატორები — დეპარტამენტს არ საჭიროებენ.</p>
-  <div class="card divide-y divide-gray-100">
+  <div class="card divide-y divide-gray-50">
     {% for person in company_wide %}
     <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
       <div>

@@ -1,75 +1,86 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} — Zoomart მოთხოვნები{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-  <h1 class="text-xl font-semibold">{{ title }}</h1>
+<div class="flex items-center justify-between mb-5">
+  <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
   <div class="flex items-center gap-2">
     {% if can_export %}
-    <a href="{% url 'request_list_export' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">ექსელში გადმოწერა</a>
+    <a href="{% url 'request_list_export' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
+      <span>ექსელში გადმოწერა</span>
+    </a>
     {% endif %}
-    <a href="{% url 'request_create' %}" class="btn btn-primary">+ ახალი მოთხოვნა</a>
+    <a href="{% url 'request_create' %}" class="btn btn-primary">
+      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+      <span>ახალი მოთხოვნა</span>
+    </a>
   </div>
 </div>
 
-<form method="get" class="card p-4 mb-4 grid grid-cols-2 md:grid-cols-6 gap-3">
+<form method="get" class="card p-4 mb-5 grid grid-cols-2 md:grid-cols-6 gap-3">
   <input type="hidden" name="scope" value="{{ scope }}">
-  <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="ძებნა…" class="col-span-2 rounded-lg border border-gray-300 px-3 py-2 text-sm">
-  <select name="status" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+  <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="ძებნა…" class="input col-span-2">
+  <select name="status" class="input">
     <option value="">ყველა სტატუსი</option>
     {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
-  <select name="department" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+  <select name="department" class="input">
     <option value="">ყველა დეპარტამენტი</option>
     {% for d in departments %}<option value="{{ d.pk }}" {% if request.GET.department == d.pk|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
   </select>
-  <select name="category" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+  <select name="category" class="input">
     <option value="">ყველა კატეგორია</option>
     {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
   </select>
-  <select name="priority" class="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+  <select name="priority" class="input">
     <option value="">ყველა პრიორიტეტი</option>
     {% for value, label in priorities %}<option value="{{ value }}" {% if request.GET.priority == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
   <div class="col-span-2 md:col-span-6"><button class="btn btn-secondary">ფილტრის გამოყენება</button></div>
 </form>
 
-<div class="card overflow-x-auto">
-  <table class="min-w-full text-sm">
-    <thead class="bg-gray-50 text-gray-500 text-xs uppercase">
+<div class="card overflow-hidden">
+  <div class="overflow-x-auto">
+  <table class="modern min-w-full">
+    <thead>
       <tr>
-        <th class="px-4 py-3 text-left">მოთხოვნის №</th>
-        <th class="px-4 py-3 text-left">სათაური</th>
-        <th class="px-4 py-3 text-left">მომთხოვნელი</th>
-        <th class="px-4 py-3 text-left">დეპარტამენტი</th>
-        <th class="px-4 py-3 text-left">თანხა</th>
-        <th class="px-4 py-3 text-left">პრიორიტეტი</th>
-        <th class="px-4 py-3 text-left">სტატუსი</th>
-        <th class="px-4 py-3 text-left">განახლდა</th>
+        <th>მოთხოვნის №</th>
+        <th>სათაური</th>
+        <th>მომთხოვნელი</th>
+        <th>დეპარტამენტი</th>
+        <th>თანხა</th>
+        <th>პრიორიტეტი</th>
+        <th>სტატუსი</th>
+        <th>განახლდა</th>
       </tr>
     </thead>
-    <tbody class="divide-y divide-gray-100">
+    <tbody class="divide-y divide-gray-50">
       {% for r in page_obj %}
-      <tr class="hover:bg-gray-50 cursor-pointer" onclick="window.location='{% url 'request_detail' r.pk %}'">
-        <td class="px-4 py-3 font-medium">{{ r.request_number }}</td>
-        <td class="px-4 py-3">{{ r.title }}</td>
-        <td class="px-4 py-3">{{ r.requester }}</td>
-        <td class="px-4 py-3">{{ r.department }}</td>
-        <td class="px-4 py-3">{{ r.estimated_cost }} {{ r.currency }}</td>
-        <td class="px-4 py-3">{{ r.get_priority_display }}</td>
-        <td class="px-4 py-3"><span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span></td>
-        <td class="px-4 py-3 text-gray-500">{{ r.updated_at|date:"M j, Y" }}</td>
+      <tr class="cursor-pointer" onclick="window.location='{% url 'request_detail' r.pk %}'">
+        <td class="font-medium text-gray-900">{{ r.request_number }}</td>
+        <td>{{ r.title }}</td>
+        <td>{{ r.requester }}</td>
+        <td>{{ r.department }}</td>
+        <td>{{ r.estimated_cost }} {{ r.currency }}</td>
+        <td>{{ r.get_priority_display }}</td>
+        <td><span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span></td>
+        <td class="text-gray-400">{{ r.updated_at|date:"M j, Y" }}</td>
       </tr>
       {% empty %}
-      <tr><td colspan="8" class="px-4 py-8 text-center text-gray-500">მოთხოვნები ვერ მოიძებნა.</td></tr>
+      <tr><td colspan="8" class="px-4 py-16 text-center text-gray-500">
+        <svg class="h-10 w-10 mx-auto mb-3 text-gray-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 13h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        მოთხოვნები ვერ მოიძებნა.
+      </td></tr>
       {% endfor %}
     </tbody>
   </table>
+  </div>
 </div>
 
 {% if page_obj.has_other_pages %}
-<div class="flex gap-2 mt-4 text-sm">
+<div class="flex items-center gap-2 mt-4 text-sm">
   {% if page_obj.has_previous %}<a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}&scope={{ scope }}">წინა</a>{% endif %}
-  <span class="px-3 py-2">გვერდი {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+  <span class="px-3 py-2 text-gray-500">გვერდი {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}<a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}&scope={{ scope }}">შემდეგი</a>{% endif %}
 </div>
 {% endif %}

@@ -3,10 +3,7 @@ from django import forms
 from core.models import Department, RequestCategory
 from .models import PaymentDetail, Request, RequestAttachment, RequestComment
 
-TAILWIND_INPUT = (
-    "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm "
-    "focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none"
-)
+TAILWIND_INPUT = "input"
 
 
 def _style(fields):
@@ -14,7 +11,7 @@ def _style(fields):
     for name, field in fields.items():
         css = TAILWIND_INPUT
         if isinstance(field.widget, (forms.CheckboxInput,)):
-            css = "h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+            css = "h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500"
         field.widget.attrs.update({"class": css})
     return fields
 

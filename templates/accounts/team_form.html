@@ -2,14 +2,14 @@
 {% block title %}{% if is_new %}ახალი თანამშრომელი{% else %}თანამშრომლის რედაქტირება{% endif %} — Zoomart მოთხოვნები{% endblock %}
 {% block content %}
 <div class="max-w-lg">
-  <h1 class="text-xl font-semibold mb-1">{% if is_new %}ახალი თანამშრომელი{% else %}რედაქტირება — {{ obj.get_full_name|default:obj.username }}{% endif %}</h1>
+  <h1 class="text-2xl font-bold tracking-tight mb-1">{% if is_new %}ახალი თანამშრომელი{% else %}რედაქტირება — {{ obj.get_full_name|default:obj.username }}{% endif %}</h1>
   <p class="text-sm text-gray-500 mb-6">შეავსეთ ძირითადი მონაცემები და აირჩიეთ ერთი როლი — ეს განსაზღვრავს რისი ნახვა/გაკეთება შეუძლია ამ ადამიანს.</p>
 
   {% if form.non_field_errors %}
-    <div class="mb-4 rounded-lg bg-red-50 text-red-700 border border-red-200 px-3 py-2 text-sm">{{ form.non_field_errors }}</div>
+    <div class="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">{{ form.non_field_errors }}</div>
   {% endif %}
 
-  <form method="post" class="card p-6 space-y-5">
+  <form method="post" class="card p-7 space-y-5">
     {% csrf_token %}
     <div class="grid grid-cols-2 gap-4">
       <div>

@@ -2,26 +2,26 @@
 {% load static %}
 {% block title %}შესვლა — Zoomart მოთხოვნები{% endblock %}
 {% block auth_content %}
-<div class="min-h-screen grid place-items-center bg-gray-50 px-4">
+<div class="min-h-screen grid place-items-center px-4 bg-gray-50" style="background-image: radial-gradient(circle at 15% 15%, rgba(0,178,116,0.08), transparent 40%), radial-gradient(circle at 85% 85%, rgba(43,142,200,0.08), transparent 40%);">
   <div class="w-full max-w-sm">
-    <div class="text-center mb-6">
-      <img src="{% static 'img/zoomart-icon.svg' %}" class="h-10 w-10 mx-auto mb-2" alt="Zoomart">
-      <h1 class="text-lg font-semibold">Zoomart — ხარჯებისა და მოთხოვნების დამტკიცება</h1>
-      <p class="text-sm text-gray-500">შედით თქვენი კომპანიის ანგარიშით</p>
+    <div class="text-center mb-7">
+      <img src="{% static 'img/zoomart-icon.svg' %}" class="h-12 w-12 mx-auto mb-3 rounded-2xl shadow-soft" alt="Zoomart">
+      <h1 class="text-lg font-bold tracking-tight">Zoomart — ხარჯებისა და მოთხოვნების დამტკიცება</h1>
+      <p class="text-sm text-gray-500 mt-1">შედით თქვენი კომპანიის ანგარიშით</p>
     </div>
-    <div class="card p-6">
+    <div class="card p-7">
       {% if form.errors %}
-        <div class="mb-4 rounded-lg bg-red-50 text-red-700 border border-red-200 px-3 py-2 text-sm">არასწორი მომხმარებელი ან პაროლი.</div>
+        <div class="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">არასწორი მომხმარებელი ან პაროლი.</div>
       {% endif %}
       <form method="post">
         {% csrf_token %}
         <div class="mb-4">
           <label class="field-label">მომხმარებლის სახელი</label>
-          <input type="text" name="username" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none" autofocus required>
+          <input type="text" name="username" class="input" autofocus required>
         </div>
-        <div class="mb-5">
+        <div class="mb-6">
           <label class="field-label">პაროლი</label>
-          <input type="password" name="password" class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none" required>
+          <input type="password" name="password" class="input" required>
         </div>
         <button type="submit" class="btn btn-primary w-full">შესვლა</button>
       </form>

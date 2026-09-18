@@ -3,16 +3,16 @@
 {% block content %}
 <div class="max-w-5xl">
 
-  <div class="flex items-start justify-between mb-6">
+  <div class="flex items-start justify-between mb-6 gap-4">
     <div>
-      <div class="flex items-center gap-3">
-        <h1 class="text-xl font-semibold">{{ obj.title }}</h1>
+      <div class="flex items-center flex-wrap gap-3">
+        <h1 class="text-2xl font-bold tracking-tight">{{ obj.title }}</h1>
         <span class="badge badge-{{ obj.status_color }}">{{ obj.get_status_display }}</span>
         {% if obj.is_confidential %}<span class="badge badge-gray">კონფიდენციალური</span>{% endif %}
       </div>
-      <div class="text-sm text-gray-500 mt-1">{{ obj.request_number }} &middot; პრიორიტეტი: {{ obj.get_priority_display }} &middot; {{ obj.estimated_cost }} {{ obj.currency }}</div>
+      <div class="text-sm text-gray-500 mt-1.5">{{ obj.request_number }} &middot; პრიორიტეტი: {{ obj.get_priority_display }} &middot; {{ obj.estimated_cost }} {{ obj.currency }}</div>
     </div>
-    <div class="flex gap-2">
+    <div class="flex gap-2 shrink-0">
       {% if can_edit %}<a href="{% url 'request_edit' obj.pk %}" class="btn btn-secondary">რედაქტირება</a>{% endif %}
       {% if can_submit %}
       <form method="post" action="{% url 'request_submit' obj.pk %}"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><button class="btn btn-primary">გაგზავნა დასამტკიცებლად</button></form>
@@ -24,12 +24,12 @@
   </div>
 
   {% if can_act %}
-  <div class="card p-4 mb-6 border-amber-200 bg-amber-50">
-    <div class="font-medium text-sm mb-2">საჭიროა თქვენი გადაწყვეტილება ამ მოთხოვნაზე</div>
-    <form method="post" class="space-y-2">
+  <div class="card p-5 mb-6 !border-amber-100 bg-amber-50/60">
+    <div class="font-semibold text-sm mb-3 text-amber-900">საჭიროა თქვენი გადაწყვეტილება ამ მოთხოვნაზე</div>
+    <form method="post" class="space-y-3">
       {% csrf_token %}
       {{ action_form.comment }}
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2">
         <button formaction="{% url 'request_approve' obj.pk %}" class="btn btn-primary">დამტკიცება</button>
         <button formaction="{% url 'request_reject' obj.pk %}" class="btn btn-danger" onclick="return confirm('უარვყოთ ეს მოთხოვნა? კომენტარი სავალდებულოა.');">უარყოფა</button>
         <button formaction="{% url 'request_more_info' obj.pk %}" class="btn btn-warn">დამატებითი ინფოს მოთხოვნა</button>
@@ -40,20 +40,20 @@
   {% endif %}
 
   {% if is_finance_user and obj.status == 'APPROVED' %}
-  <div class="card p-4 mb-6 border-blue-200 bg-blue-50 flex items-center justify-between">
-    <div class="text-sm font-medium">დამტკიცებულია — მზადაა შესაძენად.</div>
+  <div class="card p-5 mb-6 !border-blue-100 bg-blue-50/60 flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-sm font-medium text-blue-900">დამტკიცებულია — მზადაა შესაძენად.</div>
     <form method="post" action="{% url 'finance_purchase_in_progress' obj.pk %}">{% csrf_token %}<button class="btn btn-primary">მონიშვნა „შესყიდვა მიმდინარეობს"-ად</button></form>
   </div>
   {% endif %}
   {% if is_finance_user and obj.status == 'PURCHASE_IN_PROGRESS' %}
-  <div class="card p-4 mb-6 border-blue-200 bg-blue-50 flex items-center justify-between">
-    <div class="text-sm font-medium">შესყიდვა მიმდინარეობს.</div>
+  <div class="card p-5 mb-6 !border-blue-100 bg-blue-50/60 flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-sm font-medium text-blue-900">შესყიდვა მიმდინარეობს.</div>
     <form method="post" action="{% url 'finance_purchased' obj.pk %}">{% csrf_token %}<button class="btn btn-primary">მონიშვნა „შეძენილად"</button></form>
   </div>
   {% endif %}
   {% if is_finance_user and obj.status == 'PURCHASED' %}
-  <div class="card p-4 mb-6 border-blue-200 bg-blue-50">
-    <div class="text-sm font-medium mb-2">გადახდის დეტალების ჩაწერა</div>
+  <div class="card p-5 mb-6 !border-blue-100 bg-blue-50/60">
+    <div class="text-sm font-semibold mb-3 text-blue-900">გადახდის დეტალების ჩაწერა</div>
     <form method="post" action="{% url 'finance_paid' obj.pk %}" class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
       {% csrf_token %}
       <div><label class="field-label">ფაქტობრივი თანხა</label>{{ payment_form.actual_amount }}</div>
@@ -64,8 +64,8 @@
   </div>
   {% endif %}
   {% if obj.status == 'PAID' and obj.requester_id == user.id or obj.status == 'PAID' and is_finance_user %}
-  <div class="card p-4 mb-6 border-emerald-200 bg-emerald-50 flex items-center justify-between">
-    <div class="text-sm font-medium">გადახდილია. როცა ყველაფერი მიღებული/დასრულებულია, დახურეთ მოთხოვნა.</div>
+  <div class="card p-5 mb-6 !border-emerald-100 bg-emerald-50/60 flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-sm font-medium text-emerald-900">გადახდილია. როცა ყველაფერი მიღებული/დასრულებულია, დახურეთ მოთხოვნა.</div>
     <form method="post" action="{% url 'request_complete' obj.pk %}">{% csrf_token %}<button class="btn btn-primary">მონიშვნა დასრულებულად</button></form>
   </div>
   {% endif %}
@@ -74,63 +74,69 @@
     <div class="md:col-span-2 space-y-6">
 
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">მოთხოვნის ინფორმაცია</h2>
-        <dl class="grid grid-cols-2 gap-y-3 text-sm">
-          <div><dt class="text-gray-500">მომთხოვნელი</dt><dd class="font-medium">{{ obj.requester }}</dd></div>
-          <div><dt class="text-gray-500">დეპარტამენტი</dt><dd class="font-medium">{{ obj.department }}</dd></div>
-          <div><dt class="text-gray-500">კატეგორია</dt><dd class="font-medium">{{ obj.category }}</dd></div>
-          <div><dt class="text-gray-500">ტიპი</dt><dd class="font-medium">{{ obj.get_request_type_display }}</dd></div>
-          <div><dt class="text-gray-500">რაოდენობა</dt><dd class="font-medium">{{ obj.quantity }}</dd></div>
-          <div><dt class="text-gray-500">საჭიროა თარიღამდე</dt><dd class="font-medium">{{ obj.required_by_date|default:"—" }}</dd></div>
-          <div><dt class="text-gray-500">სავარაუდო ღირებულება</dt><dd class="font-medium">{{ obj.estimated_cost }} {{ obj.currency }}</dd></div>
-          <div><dt class="text-gray-500">ფაქტობრივი ღირებულება</dt><dd class="font-medium">{{ obj.actual_cost|default:"—" }}</dd></div>
-          <div><dt class="text-gray-500">მომწოდებელი</dt><dd class="font-medium">{% if obj.vendor_url %}<a class="text-brand-600 underline" href="{{ obj.vendor_url }}" target="_blank">{{ obj.vendor_name|default:obj.vendor_url }}</a>{% else %}{{ obj.vendor_name|default:"—" }}{% endif %}</dd></div>
-          <div><dt class="text-gray-500">პროდუქტის / სერვისის ბმული</dt><dd class="font-medium">{% if obj.product_url %}<a class="text-brand-600 underline" href="{{ obj.product_url }}" target="_blank">ბმულის გახსნა</a>{% else %}—{% endif %}</dd></div>
+        <h2 class="section-label mb-4">მოთხოვნის ინფორმაცია</h2>
+        <dl class="grid grid-cols-2 gap-y-4 text-sm">
+          <div><dt class="text-gray-400 mb-0.5">მომთხოვნელი</dt><dd class="font-medium">{{ obj.requester }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">დეპარტამენტი</dt><dd class="font-medium">{{ obj.department }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">კატეგორია</dt><dd class="font-medium">{{ obj.category }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">ტიპი</dt><dd class="font-medium">{{ obj.get_request_type_display }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">რაოდენობა</dt><dd class="font-medium">{{ obj.quantity }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">საჭიროა თარიღამდე</dt><dd class="font-medium">{{ obj.required_by_date|default:"—" }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">სავარაუდო ღირებულება</dt><dd class="font-medium">{{ obj.estimated_cost }} {{ obj.currency }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">ფაქტობრივი ღირებულება</dt><dd class="font-medium">{{ obj.actual_cost|default:"—" }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">მომწოდებელი</dt><dd class="font-medium">{% if obj.vendor_url %}<a class="text-brand-600 hover:underline" href="{{ obj.vendor_url }}" target="_blank">{{ obj.vendor_name|default:obj.vendor_url }}</a>{% else %}{{ obj.vendor_name|default:"—" }}{% endif %}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">პროდუქტის / სერვისის ბმული</dt><dd class="font-medium">{% if obj.product_url %}<a class="text-brand-600 hover:underline" href="{{ obj.product_url }}" target="_blank">ბმულის გახსნა</a>{% else %}—{% endif %}</dd></div>
         </dl>
-        <div class="mt-4">
-          <div class="text-gray-500 text-sm mb-1">აღწერა</div>
+        <div class="mt-5 pt-5 border-t border-gray-50">
+          <div class="text-gray-400 text-sm mb-1">აღწერა</div>
           <p class="text-sm whitespace-pre-line">{{ obj.description }}</p>
         </div>
         <div class="mt-4">
-          <div class="text-gray-500 text-sm mb-1">ბიზნეს დასაბუთება</div>
+          <div class="text-gray-400 text-sm mb-1">ბიზნეს დასაბუთება</div>
           <p class="text-sm whitespace-pre-line">{{ obj.business_justification }}</p>
         </div>
         {% if obj.notes %}
         <div class="mt-4">
-          <div class="text-gray-500 text-sm mb-1">შენიშვნები</div>
+          <div class="text-gray-400 text-sm mb-1">შენიშვნები</div>
           <p class="text-sm whitespace-pre-line">{{ obj.notes }}</p>
         </div>
         {% endif %}
       </div>
 
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">დანართები</h2>
-        <ul class="divide-y divide-gray-100 mb-3">
+        <h2 class="section-label mb-4">დანართები</h2>
+        <ul class="divide-y divide-gray-50 mb-4">
           {% for a in attachments %}
-          <li class="py-2 flex items-center justify-between text-sm">
-            <a href="{% url 'attachment_download' obj.pk a.pk %}" class="text-brand-600 underline">{{ a.original_filename }}</a>
-            <span class="text-gray-400 text-xs">{{ a.uploaded_by }} &middot; {{ a.uploaded_at|date:"M j, Y H:i" }}</span>
+          <li class="py-2.5 flex items-center justify-between text-sm gap-3">
+            <a href="{% url 'attachment_download' obj.pk a.pk %}" class="text-brand-600 hover:underline flex items-center gap-2 min-w-0">
+              <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <span class="truncate">{{ a.original_filename }}</span>
+            </a>
+            <span class="text-gray-400 text-xs shrink-0">{{ a.uploaded_by }} &middot; {{ a.uploaded_at|date:"M j, Y H:i" }}</span>
           </li>
           {% empty %}
-          <li class="py-2 text-sm text-gray-500">ჯერ დანართები არ არის.</li>
+          <li class="py-2.5 text-sm text-gray-500">ჯერ დანართები არ არის.</li>
           {% endfor %}
         </ul>
         <form method="post" enctype="multipart/form-data" class="flex items-center gap-2">
           {% csrf_token %}
           {{ aform.file }}
-          <button type="submit" name="upload_attachment" value="1" class="btn btn-secondary">ატვირთვა</button>
+          <button type="submit" name="upload_attachment" value="1" class="btn btn-secondary shrink-0">ატვირთვა</button>
         </form>
-        <p class="text-xs text-gray-400 mt-1">PDF, JPG, PNG, XLSX, DOCX — მაქსიმუმ 10 მბ.</p>
+        <p class="text-xs text-gray-400 mt-2">PDF, JPG, PNG, XLSX, DOCX — მაქსიმუმ 10 მბ.</p>
       </div>
 
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">განხილვა</h2>
-        <div class="space-y-3 mb-4">
+        <h2 class="section-label mb-4">განხილვა</h2>
+        <div class="space-y-4 mb-5">
           {% for c in comments %}
-          <div class="text-sm">
-            <span class="font-medium">{{ c.author }}</span>
-            <span class="text-gray-400 text-xs">{{ c.created_at|date:"M j, Y H:i" }}</span>
-            <p class="whitespace-pre-line">{{ c.message }}</p>
+          <div class="text-sm flex gap-3">
+            <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-100 text-gray-500 text-xs font-bold mt-0.5">{% if c.author.first_name %}{{ c.author.first_name|slice:":1"|upper }}{% else %}{{ c.author.username|slice:":1"|upper }}{% endif %}</div>
+            <div>
+              <span class="font-medium">{{ c.author }}</span>
+              <span class="text-gray-400 text-xs">{{ c.created_at|date:"M j, Y H:i" }}</span>
+              <p class="whitespace-pre-line text-gray-700">{{ c.message }}</p>
+            </div>
           </div>
           {% empty %}
           <p class="text-sm text-gray-500">ჯერ კომენტარები არ არის.</p>
@@ -139,19 +145,19 @@
         <form method="post" class="flex gap-2">
           {% csrf_token %}
           {{ cform.message }}
-          <button type="submit" name="post_comment" value="1" class="btn btn-secondary">გაგზავნა</button>
+          <button type="submit" name="post_comment" value="1" class="btn btn-secondary shrink-0">გაგზავნა</button>
         </form>
       </div>
     </div>
 
     <div class="space-y-6">
       <div class="card p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">დამტკიცების ვადები</h2>
+        <h2 class="section-label mb-4">დამტკიცების ვადები</h2>
         <ol>
-          <li class="flex gap-3 pb-4">
+          <li class="flex gap-3 pb-5">
             <span class="flex flex-col items-center">
-              <span class="h-2.5 w-2.5 rounded-full bg-gray-400 shrink-0"></span>
-              <span class="w-px flex-1 bg-gray-200"></span>
+              <span class="h-2.5 w-2.5 rounded-full bg-gray-300 shrink-0 ring-4 ring-gray-50"></span>
+              <span class="w-px flex-1 bg-gray-100"></span>
             </span>
             <span class="pb-1">
               <div class="text-sm font-medium">შექმნილია — {{ obj.requester }}</div>
@@ -159,10 +165,10 @@
             </span>
           </li>
           {% if obj.submitted_at %}
-          <li class="flex gap-3 pb-4">
+          <li class="flex gap-3 pb-5">
             <span class="flex flex-col items-center">
-              <span class="h-2.5 w-2.5 rounded-full bg-gray-400 shrink-0"></span>
-              <span class="w-px flex-1 bg-gray-200"></span>
+              <span class="h-2.5 w-2.5 rounded-full bg-gray-300 shrink-0 ring-4 ring-gray-50"></span>
+              <span class="w-px flex-1 bg-gray-100"></span>
             </span>
             <span class="pb-1">
               <div class="text-sm font-medium">გაგზავნილია</div>
@@ -171,10 +177,10 @@
           </li>
           {% endif %}
           {% for step in timeline %}
-          <li class="flex gap-3 pb-4">
+          <li class="flex gap-3 pb-5">
             <span class="flex flex-col items-center">
-              <span class="h-2.5 w-2.5 rounded-full shrink-0 {% if step.decision == 'APPROVED' %}bg-emerald-500{% elif step.decision == 'REJECTED' %}bg-red-500{% elif step.decision == 'INFO_REQUESTED' %}bg-orange-500{% elif step.decision == 'SKIPPED' %}bg-gray-300{% elif step.decision == 'PENDING' %}bg-amber-400{% else %}bg-gray-200{% endif %}"></span>
-              <span class="w-px flex-1 bg-gray-200"></span>
+              <span class="h-2.5 w-2.5 rounded-full shrink-0 ring-4 ring-gray-50 {% if step.decision == 'APPROVED' %}bg-emerald-500{% elif step.decision == 'REJECTED' %}bg-red-500{% elif step.decision == 'INFO_REQUESTED' %}bg-orange-500{% elif step.decision == 'SKIPPED' %}bg-gray-300{% elif step.decision == 'PENDING' %}bg-amber-400{% else %}bg-gray-200{% endif %}"></span>
+              <span class="w-px flex-1 bg-gray-100"></span>
             </span>
             <span class="pb-1">
               <div class="text-sm font-medium">{{ step.get_approver_role_display }}{% if step.assigned_to %} — {{ step.assigned_to }}{% endif %}</div>
@@ -186,7 +192,7 @@
           {% endfor %}
           {% if obj.status == 'APPROVED' or obj.status == 'PURCHASE_IN_PROGRESS' or obj.status == 'PURCHASED' or obj.status == 'PAID' or obj.status == 'COMPLETED' %}
           <li class="flex gap-3">
-            <span class="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0 mt-0.5"></span>
+            <span class="h-2.5 w-2.5 rounded-full bg-blue-500 shrink-0 mt-0.5 ring-4 ring-gray-50"></span>
             <div class="text-sm font-medium">{{ obj.get_status_display }}</div>
           </li>
           {% endif %}

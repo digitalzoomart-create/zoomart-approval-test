@@ -5,67 +5,112 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}Zoomart მოთხოვნები{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'img/zoomart-icon.svg' %}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/dist/output.css">
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen">
+<body class="bg-gray-50 text-gray-900 min-h-screen font-sans">
 {% if user.is_authenticated %}
 <div class="flex min-h-screen">
-  <aside class="w-60 shrink-0 border-r border-gray-200 bg-white flex flex-col">
-    <div class="px-5 py-5 border-b border-gray-100">
-      <div class="flex items-center gap-2">
-        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-8 w-8" alt="Zoomart">
+  <aside class="w-64 shrink-0 border-r border-gray-100 bg-white flex flex-col">
+    <div class="px-5 py-5">
+      <div class="flex items-center gap-2.5">
+        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-9 w-9 rounded-lg" alt="Zoomart">
         <div class="leading-tight">
-          <div class="font-semibold text-sm">Zoomart</div>
-          <div class="text-xs text-gray-500">ხარჯები და მოთხოვნები</div>
+          <div class="font-bold text-[15px] tracking-tight">Zoomart</div>
+          <div class="text-xs text-gray-400">ხარჯები და მოთხოვნები</div>
         </div>
       </div>
     </div>
-    <nav class="flex-1 px-3 py-4 space-y-1 text-sm">
-      <a href="{% url 'dashboard' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name == 'dashboard' %}bg-gray-100 font-medium{% endif %}">დეშბორდი</a>
-      <a href="{% url 'request_create' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name == 'request_create' %}bg-gray-100 font-medium{% endif %}">+ ახალი მოთხოვნა</a>
-      <a href="{% url 'request_list' %}?scope=mine" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.GET.scope == 'mine' or request.GET.scope is None and request.resolver_match.url_name == 'request_list' %}bg-gray-100 font-medium{% endif %}">ჩემი მოთხოვნები</a>
+    <nav class="flex-1 px-3 pb-4 space-y-0.5 text-sm overflow-y-auto">
+      <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+        <span>დეშბორდი</span>
+      </a>
+      <a href="{% url 'request_create' %}" class="nav-link {% if request.resolver_match.url_name == 'request_create' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span>ახალი მოთხოვნა</span>
+      </a>
+      <a href="{% url 'request_list' %}?scope=mine" class="nav-link {% if request.GET.scope == 'mine' or request.GET.scope is None and request.resolver_match.url_name == 'request_list' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        <span>ჩემი მოთხოვნები</span>
+      </a>
       {% if user.is_manager or user.is_senior_management or user.is_admin_role %}
-      <a href="{% url 'request_list' %}?scope=approvals" class="flex items-center justify-between rounded-lg px-3 py-2 hover:bg-gray-100">
-        <span>დასამტკიცებელი</span>
+      <a href="{% url 'request_list' %}?scope=approvals" class="nav-link justify-between {% if request.GET.scope == 'approvals' %}is-active{% endif %}">
+        <span class="flex items-center gap-2.5">
+          <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l1.5 1.5 4.5-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          <span>დასამტკიცებელი</span>
+        </span>
         {% if nav_pending_approvals_count %}<span class="badge badge-yellow">{{ nav_pending_approvals_count }}</span>{% endif %}
       </a>
       {% endif %}
       {% if user.is_manager and user.department_id %}
-      <a href="{% url 'request_list' %}?scope=department" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.GET.scope == 'department' %}bg-gray-100 font-medium{% endif %}">ჩემი დეპარტამენტის მოთხოვნები</a>
+      <a href="{% url 'request_list' %}?scope=department" class="nav-link {% if request.GET.scope == 'department' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 21h18M5 21V7l7-4 7 4v14M9 9h1m-1 4h1m4-4h1m-1 4h1m-5 8v-4a1 1 0 011-1h2a1 1 0 011 1v4"/></svg>
+        <span>ჩემი დეპარტამენტის მოთხოვნები</span>
+      </a>
       {% endif %}
       {% if user.is_finance or user.is_admin_role %}
-      <a href="{% url 'request_list' %}?scope=finance" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ფინანსები</a>
+      <a href="{% url 'request_list' %}?scope=finance" class="nav-link {% if request.GET.scope == 'finance' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M3 6h18a1 1 0 011 1v10a1 1 0 01-1 1H3a1 1 0 01-1-1V7a1 1 0 011-1zm9 8a2 2 0 100-4 2 2 0 000 4z"/></svg>
+        <span>ფინანსები</span>
+      </a>
       {% endif %}
       {% if user.is_senior_management or user.is_admin_role or user.is_procurement_manager or user.is_finance %}
-      <a href="{% url 'request_list' %}?scope=all" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">რეპორტები / ყველა მოთხოვნა</a>
+      <a href="{% url 'request_list' %}?scope=all" class="nav-link {% if request.GET.scope == 'all' %}is-active{% endif %}">
+        <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17V9m6 8V5M5 21h14a1 1 0 001-1V4a1 1 0 00-1-1H5a1 1 0 00-1 1v16a1 1 0 001 1z"/></svg>
+        <span>რეპორტები / ყველა მოთხოვნა</span>
+      </a>
       {% endif %}
       {% if user.is_admin_role %}
-      <a href="{% url 'team_list' %}" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100 {% if request.resolver_match.url_name in 'team_list,person_create,person_edit,department_create,department_edit' %}bg-gray-100 font-medium{% endif %}">გუნდის მართვა</a>
-      <a href="/admin/" class="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-gray-100">ადმინისტრირება (გაფართოებული)</a>
+      <div class="pt-3 mt-3 border-t border-gray-100 space-y-0.5">
+        <a href="{% url 'team_list' %}" class="nav-link {% if request.resolver_match.url_name in 'team_list,person_create,person_edit,department_create,department_edit' %}is-active{% endif %}">
+          <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-1a4 4 0 00-4-4h-1m-5-4a4 4 0 100-8 4 4 0 000 8zm0 0v0c-3.31 0-6 1.79-6 4v1h9m-3-5a4 4 0 014-4"/></svg>
+          <span>გუნდის მართვა</span>
+        </a>
+        <a href="/admin/" class="nav-link">
+          <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><circle cx="12" cy="12" r="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>ადმინისტრირება (გაფართოებული)</span>
+        </a>
+      </div>
       {% endif %}
     </nav>
-    <div class="px-4 py-4 border-t border-gray-100 text-xs text-gray-500">
-      შესული ხართ, როგორც<br><span class="font-medium text-gray-700">{{ user.get_full_name|default:user.username }}</span><br>
-      {% for r in user.role_names %}<span class="badge badge-gray mt-1">{{ r|role_ka }}</span>{% endfor %}
+    <div class="px-4 py-4 border-t border-gray-100">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-xs font-bold">
+          {% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":2"|upper }}{% endif %}
+        </div>
+        <div class="min-w-0 flex-1">
+          <div class="text-sm font-medium text-gray-800 truncate">{{ user.get_full_name|default:user.username }}</div>
+          <div class="text-xs text-gray-400 truncate">{% for r in user.role_names %}{{ r|role_ka }}{% if not forloop.last %}, {% endif %}{% endfor %}</div>
+        </div>
+      </div>
     </div>
   </aside>
 
   <div class="flex-1 flex flex-col min-w-0">
-    <header class="h-14 border-b border-gray-200 bg-white flex items-center justify-between px-6 gap-4">
+    <header class="h-16 border-b border-gray-100 bg-white/80 backdrop-blur sticky top-0 z-10 flex items-center justify-between px-6 gap-4">
       <form method="get" action="{% url 'request_list' %}" class="flex-1 max-w-md">
-        <input type="text" name="q" placeholder="ძებნა № , სათაურით, მომწოდებლით…" class="w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-emerald-500 focus:ring-emerald-500 focus:outline-none">
+        <div class="relative">
+          <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
+          <input type="text" name="q" placeholder="ძებნა № , სათაურით, მომწოდებლით…" class="input !rounded-full !pl-9 !py-2 bg-gray-50 border-gray-200 focus:bg-white">
+        </div>
       </form>
       <form method="post" action="{% url 'logout' %}">
         {% csrf_token %}
-        <button class="text-sm text-gray-500 hover:text-gray-800">გასვლა</button>
+        <button class="btn-ghost inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm">
+          <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m4 5v.5a2.5 2.5 0 01-2.5 2.5h-4A2.5 2.5 0 012 17.5v-11A2.5 2.5 0 014.5 4h4A2.5 2.5 0 0111 6.5V7"/></svg>
+          <span>გასვლა</span>
+        </button>
       </form>
     </header>
 
-    <main class="flex-1 p-6">
+    <main class="flex-1 p-6 max-w-[1400px] w-full">
       {% if messages %}
-        <div class="mb-4 space-y-2">
+        <div class="mb-5 space-y-2">
           {% for message in messages %}
-            <div class="rounded-lg px-4 py-2.5 text-sm {% if message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200{% else %}bg-emerald-50 text-emerald-800 border border-emerald-200{% endif %}">{{ message }}</div>
+            <div class="rounded-xl px-4 py-3 text-sm border {% if message.tags == 'error' %}bg-red-50 text-red-700 border-red-100{% else %}bg-emerald-50 text-emerald-800 border-emerald-100{% endif %}">{{ message }}</div>
           {% endfor %}
         </div>
       {% endif %}

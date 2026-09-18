@@ -1,46 +1,78 @@
 {% extends "base.html" %}
 {% block title %}დეშბორდი — Zoomart მოთხოვნები{% endblock %}
 {% block content %}
-<h1 class="text-xl font-semibold mb-1">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
-<p class="text-sm text-gray-500 mb-6">აი, რა ხდება თქვენს მოთხოვნებთან დაკავშირებით დღეს.</p>
+<h1 class="text-2xl font-bold tracking-tight mb-1">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
+<p class="text-sm text-gray-500 mb-8">აი, რა ხდება თქვენს მოთხოვნებთან დაკავშირებით დღეს.</p>
 
 <section class="mb-8">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ჩემი მოთხოვნები</h2>
+  <h2 class="section-label mb-3">ჩემი მოთხოვნები</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ my_draft }}</div><div class="text-sm text-gray-500">მონახაზი</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-amber-600">{{ my_pending }}</div><div class="text-sm text-gray-500">მოლოდინში</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-emerald-600">{{ my_approved }}</div><div class="text-sm text-gray-500">დამტკიცებული</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-red-600">{{ my_rejected }}</div><div class="text-sm text-gray-500">უარყოფილი</div></div>
-  </div>
-  <div class="card mt-4 divide-y divide-gray-100">
-    {% for r in my_recent %}
-    <a href="{% url 'request_detail' r.pk %}" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50">
-      <div>
-        <div class="text-sm font-medium">{{ r.title }}</div>
-        <div class="text-xs text-gray-500">{{ r.request_number }} &middot; {{ r.estimated_cost }} {{ r.currency }}</div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <div class="icon-chip bg-gray-100 text-gray-500">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+        </div>
       </div>
-      <span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span>
+      <div class="text-2xl font-bold tracking-tight">{{ my_draft }}</div>
+      <div class="text-sm text-gray-500">მონახაზი</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <div class="icon-chip bg-amber-50 text-amber-600">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold tracking-tight text-amber-600">{{ my_pending }}</div>
+      <div class="text-sm text-gray-500">მოლოდინში</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <div class="icon-chip bg-emerald-50 text-emerald-600">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l1.5 1.5 4.5-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold tracking-tight text-emerald-600">{{ my_approved }}</div>
+      <div class="text-sm text-gray-500">დამტკიცებული</div>
+    </div>
+    <div class="stat-card">
+      <div class="flex items-center justify-between mb-2">
+        <div class="icon-chip bg-red-50 text-red-600">
+          <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+        </div>
+      </div>
+      <div class="text-2xl font-bold tracking-tight text-red-600">{{ my_rejected }}</div>
+      <div class="text-sm text-gray-500">უარყოფილი</div>
+    </div>
+  </div>
+  <div class="card mt-4 divide-y divide-gray-50 overflow-hidden">
+    {% for r in my_recent %}
+    <a href="{% url 'request_detail' r.pk %}" class="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors">
+      <div class="min-w-0">
+        <div class="text-sm font-medium truncate">{{ r.title }}</div>
+        <div class="text-xs text-gray-400">{{ r.request_number }} &middot; {{ r.estimated_cost }} {{ r.currency }}</div>
+      </div>
+      <span class="badge badge-{{ r.status_color }} shrink-0 ml-3">{{ r.get_status_display }}</span>
     </a>
     {% empty %}
-    <div class="px-4 py-6 text-sm text-gray-500 text-center">ჯერ არ გაქვთ მოთხოვნები — <a href="{% url 'request_create' %}" class="text-brand-600 underline">შექმენით პირველი</a>.</div>
+    <div class="px-5 py-8 text-sm text-gray-500 text-center">ჯერ არ გაქვთ მოთხოვნები — <a href="{% url 'request_create' %}" class="text-brand-600 font-medium hover:underline">შექმენით პირველი</a>.</div>
     {% endfor %}
   </div>
 </section>
 
 {% if approvals_waiting is not None %}
 <section class="mb-8">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ჩემი დამტკიცების მოლოდინში ({{ approvals_waiting }})</h2>
-  <div class="card divide-y divide-gray-100">
+  <h2 class="section-label mb-3">ჩემი დამტკიცების მოლოდინში ({{ approvals_waiting }})</h2>
+  <div class="card divide-y divide-gray-50 overflow-hidden">
     {% for a in approvals_recent %}
-    <a href="{% url 'request_detail' a.request.pk %}" class="flex items-center justify-between px-4 py-3 hover:bg-gray-50">
-      <div>
-        <div class="text-sm font-medium">{{ a.request.title }}</div>
-        <div class="text-xs text-gray-500">{{ a.request.request_number }} &middot; {{ a.request.requester }} &middot; {{ a.request.estimated_cost }} {{ a.request.currency }}</div>
+    <a href="{% url 'request_detail' a.request.pk %}" class="flex items-center justify-between px-5 py-3.5 hover:bg-gray-50 transition-colors">
+      <div class="min-w-0">
+        <div class="text-sm font-medium truncate">{{ a.request.title }}</div>
+        <div class="text-xs text-gray-400">{{ a.request.request_number }} &middot; {{ a.request.requester }} &middot; {{ a.request.estimated_cost }} {{ a.request.currency }}</div>
       </div>
-      <span class="badge badge-yellow">{{ a.get_approver_role_display }}</span>
+      <span class="badge badge-yellow shrink-0 ml-3">{{ a.get_approver_role_display }}</span>
     </a>
     {% empty %}
-    <div class="px-4 py-6 text-sm text-gray-500 text-center">თქვენი დამტკიცების მოლოდინში არაფერია.</div>
+    <div class="px-5 py-8 text-sm text-gray-500 text-center">თქვენი დამტკიცების მოლოდინში არაფერია.</div>
     {% endfor %}
   </div>
 </section>
@@ -48,42 +80,42 @@
 
 {% if finance_awaiting is not None %}
 <section class="mb-8">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ფინანსები</h2>
+  <h2 class="section-label mb-3">ფინანსები</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_awaiting }}</div><div class="text-sm text-gray-500">ფინანსების მოლოდინში</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_in_progress }}</div><div class="text-sm text-gray-500">შესყიდვა მიმდინარეობს</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_awaiting_payment }}</div><div class="text-sm text-gray-500">გადახდის მოლოდინში</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ finance_paid_this_month|floatformat:0 }}</div><div class="text-sm text-gray-500">გადახდილი (სულ, GEL)</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight">{{ finance_awaiting }}</div><div class="text-sm text-gray-500">ფინანსების მოლოდინში</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight">{{ finance_in_progress }}</div><div class="text-sm text-gray-500">შესყიდვა მიმდინარეობს</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight">{{ finance_awaiting_payment }}</div><div class="text-sm text-gray-500">გადახდის მოლოდინში</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight">{{ finance_paid_this_month|floatformat:0 }}</div><div class="text-sm text-gray-500">გადახდილი (სულ, GEL)</div></div>
   </div>
 </section>
 {% endif %}
 
 {% if mgmt_total_requested is not None %}
 <section class="mb-8">
-  <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">ხარჯების ანალიტიკა</h2>
+  <h2 class="section-label mb-3">ხარჯების ანალიტიკა</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-    <div class="stat-card"><div class="text-2xl font-semibold">{{ mgmt_total_requested|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ მოთხოვნილი</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-emerald-600">{{ mgmt_total_approved|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ დამტკიცებული</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-blue-600">{{ mgmt_total_paid|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ გადახდილი</div></div>
-    <div class="stat-card"><div class="text-2xl font-semibold text-amber-600">{{ mgmt_pending_amount|floatformat:0 }}</div><div class="text-sm text-gray-500">დამტკიცების მოლოდინში (თანხა)</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight">{{ mgmt_total_requested|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ მოთხოვნილი</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight text-emerald-600">{{ mgmt_total_approved|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ დამტკიცებული</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight text-blue-600">{{ mgmt_total_paid|floatformat:0 }}</div><div class="text-sm text-gray-500">სულ გადახდილი</div></div>
+    <div class="stat-card"><div class="text-2xl font-bold tracking-tight text-amber-600">{{ mgmt_pending_amount|floatformat:0 }}</div><div class="text-sm text-gray-500">დამტკიცების მოლოდინში (თანხა)</div></div>
   </div>
   <div class="grid md:grid-cols-3 gap-4">
-    <div class="card p-4">
-      <div class="text-sm font-medium mb-2">ხარჯები დეპარტამენტების მიხედვით</div>
+    <div class="card p-5">
+      <div class="text-sm font-semibold mb-3">ხარჯები დეპარტამენტების მიხედვით</div>
       {% for d in mgmt_by_department %}
-        <div class="flex justify-between text-sm py-1"><span class="text-gray-600">{{ d.department__name|default:"—" }}</span><span class="font-medium">{{ d.total|floatformat:0 }}</span></div>
+        <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0"><span class="text-gray-600">{{ d.department__name|default:"—" }}</span><span class="font-medium">{{ d.total|floatformat:0 }}</span></div>
       {% endfor %}
     </div>
-    <div class="card p-4">
-      <div class="text-sm font-medium mb-2">ხარჯები კატეგორიების მიხედვით</div>
+    <div class="card p-5">
+      <div class="text-sm font-semibold mb-3">ხარჯები კატეგორიების მიხედვით</div>
       {% for c in mgmt_by_category %}
-        <div class="flex justify-between text-sm py-1"><span class="text-gray-600">{{ c.category__name|default:"—" }}</span><span class="font-medium">{{ c.total|floatformat:0 }}</span></div>
+        <div class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0"><span class="text-gray-600">{{ c.category__name|default:"—" }}</span><span class="font-medium">{{ c.total|floatformat:0 }}</span></div>
       {% endfor %}
     </div>
-    <div class="card p-4">
-      <div class="text-sm font-medium mb-2">უმსხვილესი მოთხოვნები</div>
+    <div class="card p-5">
+      <div class="text-sm font-semibold mb-3">უმსხვილესი მოთხოვნები</div>
       {% for r in mgmt_largest %}
-        <a href="{% url 'request_detail' r.pk %}" class="flex justify-between text-sm py-1 hover:underline"><span class="text-gray-600">{{ r.title|truncatechars:22 }}</span><span class="font-medium">{{ r.estimated_cost }}</span></a>
+        <a href="{% url 'request_detail' r.pk %}" class="flex justify-between text-sm py-1.5 border-b border-gray-50 last:border-0 hover:text-brand-700"><span class="text-gray-600">{{ r.title|truncatechars:22 }}</span><span class="font-medium">{{ r.estimated_cost }}</span></a>
       {% endfor %}
     </div>
   </div>
