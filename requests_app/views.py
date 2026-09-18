@@ -58,10 +58,11 @@ def dashboard(request):
     return render(request, "dashboard/dashboard.html", ctx)
 
 
-@login_required
-def request_list(request):
+def _scoped_request_queryset(request, user):
+    """Builds the (queryset, title, scope, can_export) for a given scope +
+    filters. Shared by the HTML list view and the Excel export, so the
+    exported file always matches exactly what's on screen."""
     scope = request.GET.get("scope", "mine")
-    user = request.user
 
     if scope == "approvals":
         qs = Request.objects.filter(pk__in=RequestApproval.objects.pending_for_user(user).values("request_id"))
@@ -111,6 +112,20 @@ def request_list(request):
         qs = qs.filter(priority=priority)
 
     qs = qs.select_related("department", "category", "requester").order_by("-created_at")
+
+    # Excel export is offered to the roles that actually need a report to
+    # take offline — department directors (their own department's requests)
+    # and Finance/admin/senior management (who can see everything relevant).
+    can_export = user.is_manager or user.is_finance or user.is_admin_role or user.is_senior_management or user.is_procurement_manager
+
+    return qs, title, scope, can_export
+
+
+@login_required
+def request_list(request):
+    user = request.user
+    qs, title, scope, can_export = _scoped_request_queryset(request, user)
+
     paginator = Paginator(qs, 20)
     page_obj = paginator.get_page(request.GET.get("page"))
 
@@ -127,8 +142,69 @@ def request_list(request):
             "departments": Department.objects.filter(is_active=True),
             "categories": RequestCategory.objects.filter(is_active=True),
             "priorities": Request.PRIORITY_CHOICES,
+            "can_export": can_export,
         },
     )
+
+
+@login_required
+def request_list_export(request):
+    """Downloads the same list the user is currently looking at (same scope
+    + filters) as an .xlsx file, for offline reporting by department
+    directors and Finance."""
+    user = request.user
+    qs, title, scope, can_export = _scoped_request_queryset(request, user)
+    if not can_export:
+        raise Http404
+
+    from openpyxl import Workbook
+    from openpyxl.styles import Font
+    from openpyxl.utils import get_column_letter
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "მოთხოვნები"
+
+    headers = [
+        "მოთხოვნის №", "სათაური", "მომთხოვნელი", "დეპარტამენტი", "კატეგორია",
+        "სავარაუდო თანხა", "ფაქტობრივი თანხა", "ვალუტა", "პრიორიტეტი", "სტატუსი",
+        "გაგზავნის თარიღი", "განახლების თარიღი",
+    ]
+    ws.append(headers)
+    for cell in ws[1]:
+        cell.font = Font(bold=True)
+
+    for r in qs:
+        ws.append([
+            r.request_number,
+            r.title,
+            str(r.requester),
+            str(r.department) if r.department_id else "",
+            str(r.category) if r.category_id else "",
+            float(r.estimated_cost) if r.estimated_cost is not None else None,
+            float(r.actual_cost) if r.actual_cost is not None else None,
+            r.currency,
+            r.get_priority_display(),
+            r.get_status_display(),
+            r.submitted_at.strftime("%Y-%m-%d") if r.submitted_at else "",
+            r.updated_at.strftime("%Y-%m-%d") if r.updated_at else "",
+        ])
+
+    for i, _ in enumerate(headers, start=1):
+        ws.column_dimensions[get_column_letter(i)].width = 20
+
+    from io import BytesIO
+    buf = BytesIO()
+    wb.save(buf)
+    buf.seek(0)
+
+    import datetime as _dt
+    filename = f"zoomart-{scope}-{_dt.date.today().isoformat()}.xlsx"
+    response = FileResponse(
+        buf, as_attachment=True, filename=filename,
+        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+    return response
 
 
 @login_required

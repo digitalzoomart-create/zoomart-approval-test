@@ -424,6 +424,57 @@ class DepartmentDirectorRequestListTests(BaseWorkflowTestCase):
         self.assertContains(resp, req.request_number)
 
 
+class RequestListExportTests(BaseWorkflowTestCase):
+    """Excel export must be offered to department directors and Finance
+    (and other elevated roles), must reflect the same scope/filters as the
+    list the user is looking at, and must be refused to plain employees."""
+
+    def test_manager_can_export_department_scope_as_xlsx(self):
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        services.submit_request(req, self.employee_a)
+        services.approve(req, self.manager_a, "ok")
+
+        client = Client()
+        client.force_login(self.manager_a)
+        resp = client.get("/requests/export/?scope=department")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(
+            resp["Content-Type"],
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+        from io import BytesIO
+        from openpyxl import load_workbook
+
+        wb = load_workbook(BytesIO(b"".join(resp.streaming_content)))
+        ws = wb.active
+        rows = list(ws.iter_rows(values_only=True))
+        self.assertEqual(rows[0][0], "მოთხოვნის №")
+        self.assertIn(req.request_number, [row[0] for row in rows[1:]])
+
+    def test_finance_user_can_export(self):
+        client = Client()
+        client.force_login(self.finance_user)
+        resp = client.get("/requests/export/?scope=finance")
+        self.assertEqual(resp.status_code, 200)
+
+    def test_plain_employee_cannot_export(self):
+        client = Client()
+        client.force_login(self.employee_a)
+        resp = client.get("/requests/export/")
+        self.assertEqual(resp.status_code, 404)
+
+    def test_export_button_shown_to_manager_and_finance_but_not_employee(self):
+        client = Client()
+        client.force_login(self.manager_a)
+        resp = client.get("/requests/?scope=department")
+        self.assertContains(resp, "ექსელში გადმოწერა")
+
+        client.force_login(self.employee_a)
+        resp = client.get("/requests/?scope=mine")
+        self.assertNotContains(resp, "ექსელში გადმოწერა")
+
+
 class RaceConditionTests(BaseWorkflowTestCase):
     def test_cannot_approve_the_same_step_twice(self):
         req = self._make_request(self.employee_a, self.dept_a, 300)
