@@ -1,4 +1,5 @@
 import datetime
+import os
 
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
@@ -26,12 +27,35 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
-        if options["fresh"]:
-            Request.objects.all().delete()
-            User.objects.filter(is_superuser=False).delete()
+        # Safety net: our Render startCommand runs this on every single boot
+        # (originally so the free-tier demo always resets). Once real people
+        # have real accounts, we must never again touch users/departments/
+        # categories/requests here — no matter what flags are passed — or a
+        # routine restart could wipe or duplicate real company data.
+        #
+        # We treat "any non-superuser user already exists" as proof this
+        # database has been seeded/used before, and from then on this
+        # command only makes sure the fixed system roles (Groups) exist and
+        # otherwise does nothing. Set ALLOW_DEMO_RESEED=true as an explicit,
+        # one-time override if a full demo reset is ever genuinely wanted
+        # again on a non-production database.
+        already_seeded = User.objects.filter(is_superuser=False).exists()
+        allow_reseed = os.environ.get("ALLOW_DEMO_RESEED", "").strip().lower() == "true"
 
         for name in ROLES:
             Group.objects.get_or_create(name=name)
+
+        if already_seeded and not allow_reseed:
+            self.stdout.write(self.style.WARNING(
+                "მონაცემები უკვე არსებობს — დემო მონაცემების ხელახლა ჩატვირთვა გამოტოვებულია "
+                "(დაცვის მიზნით). განგებ სრული გადატვირთვისთვის დააყენეთ გარემოს ცვლადი "
+                "ALLOW_DEMO_RESEED=true."
+            ))
+            return
+
+        if options["fresh"]:
+            Request.objects.all().delete()
+            User.objects.filter(is_superuser=False).delete()
 
         for i, name in enumerate(CATEGORIES):
             RequestCategory.objects.update_or_create(name=name, defaults={"sort_order": i})
