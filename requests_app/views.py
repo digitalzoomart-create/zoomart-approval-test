@@ -77,6 +77,16 @@ def request_list(request):
     elif scope == "all" and (user.is_admin_role or user.is_senior_management or user.is_procurement_manager):
         qs = Request.objects.all()
         title = "ყველა მოთხოვნა"
+    elif scope == "department" and user.is_manager and user.department_id:
+        # Everything from the director's own department, at ANY status —
+        # including requests they already approved/rejected, which is the
+        # whole point: once a director decides on a request, it must not
+        # simply disappear from their view. visible_requests_qs already
+        # grants this (own-department non-confidential requests, plus any
+        # request they were ever an approval step on), so this scope is
+        # just that queryset with no status filtering on top.
+        qs = visible_requests_qs(user)
+        title = f"{user.department} — ჩემი დეპარტამენტის მოთხოვნები"
     else:
         qs = Request.objects.filter(requester=user)
         title = "ჩემი მოთხოვნები"

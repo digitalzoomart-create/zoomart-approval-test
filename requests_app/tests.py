@@ -358,6 +358,72 @@ class PendingForUserTests(BaseWorkflowTestCase):
         self.assertIn(req.pk, finance_queue.values_list("request_id", flat=True))
 
 
+class DepartmentDirectorRequestListTests(BaseWorkflowTestCase):
+    """Regression test for the bug where a department director approving (or
+    rejecting) a request made it disappear from their view entirely — it was
+    only ever shown in their 'pending approvals' queue, which drops it the
+    moment they decide on it. scope=department must keep it visible, with
+    its current status, going forward."""
+
+    def test_manager_still_sees_request_in_department_scope_after_approving(self):
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        services.submit_request(req, self.employee_a)
+
+        client = Client()
+        client.force_login(self.manager_a)
+
+        # Before deciding: shows up as pending in scope=approvals.
+        resp = client.get("/requests/?scope=approvals")
+        self.assertContains(resp, req.request_number)
+
+        services.approve(req, self.manager_a, "ok")
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+
+        # It has left the pending-approvals queue now that it's decided...
+        resp = client.get("/requests/?scope=approvals")
+        self.assertNotContains(resp, req.request_number)
+
+        # ...but must still be findable, with its status, in the
+        # department director's own department view.
+        resp = client.get("/requests/?scope=department")
+        self.assertContains(resp, req.request_number)
+        self.assertContains(resp, "დამტკიცებული")
+
+    def test_manager_still_sees_request_in_department_scope_after_rejecting(self):
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        services.submit_request(req, self.employee_a)
+
+        client = Client()
+        client.force_login(self.manager_a)
+
+        services.reject(req, self.manager_a, "Not approved.")
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_REJECTED)
+
+        resp = client.get("/requests/?scope=department")
+        self.assertContains(resp, req.request_number)
+
+    def test_manager_cannot_see_another_departments_requests_in_department_scope(self):
+        req = self._make_request(self.employee_b, self.dept_b, 300)
+        services.submit_request(req, self.employee_b)
+        services.approve(req, self.manager_b, "ok")
+
+        client = Client()
+        client.force_login(self.manager_a)
+        resp = client.get("/requests/?scope=department")
+        self.assertNotContains(resp, req.request_number)
+
+    def test_non_manager_department_scope_falls_back_to_own_requests(self):
+        req = self._make_request(self.employee_a, self.dept_a, 300)
+        client = Client()
+        client.force_login(self.employee_a)
+        resp = client.get("/requests/?scope=department")
+        # Employees aren't department directors, so this scope silently
+        # falls back to the normal "my requests" view rather than erroring.
+        self.assertContains(resp, req.request_number)
+
+
 class RaceConditionTests(BaseWorkflowTestCase):
     def test_cannot_approve_the_same_step_twice(self):
         req = self._make_request(self.employee_a, self.dept_a, 300)
