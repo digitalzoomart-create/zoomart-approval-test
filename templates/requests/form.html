@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}{% if is_new %}ახალი მოთხოვნა{% else %}მოთხოვნის რედაქტირება{% endif %} — Zoomart მოთხოვნები{% endblock %}
+{% block title %}{% if is_new %}ახალი მოთხოვნა{% else %}მოთხოვნის რედაქტირება{% endif %} — ZooFlow{% endblock %}
 {% block content %}
 <div class="max-w-3xl">
   <h1 class="text-2xl font-bold tracking-tight mb-1">{% if is_new %}ახალი მოთხოვნა{% else %}რედაქტირება {{ obj.request_number }}{% endif %}</h1>

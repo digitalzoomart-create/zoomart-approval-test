@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{% block title %}Zoomart მოთხოვნები{% endblock %}</title>
+  <title>{% block title %}ZooFlow{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'img/zoomart-icon.svg' %}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -16,10 +16,10 @@
   <aside class="w-64 shrink-0 border-r border-gray-100 bg-white flex flex-col">
     <div class="px-5 py-5">
       <div class="flex items-center gap-2.5">
-        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-9 w-9 rounded-lg" alt="Zoomart">
+        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-9 w-9 rounded-lg" alt="ZooFlow">
         <div class="leading-tight">
-          <div class="font-bold text-[15px] tracking-tight">Zoomart</div>
-          <div class="text-xs text-gray-400">ხარჯები და მოთხოვნები</div>
+          <div class="font-bold text-[15px] tracking-tight">ZooFlow</div>
+          <div class="text-xs text-gray-400">Zoomart-ის ხარჯები და მოთხოვნები</div>
         </div>
       </div>
     </div>
@@ -94,7 +94,7 @@
       <form method="get" action="{% url 'request_list' %}" class="flex-1 max-w-md">
         <div class="relative">
           <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" name="q" placeholder="ძებნა № , სათაურით, მომწოდებლით…" class="input !rounded-full !pl-9 !py-2 bg-gray-50 border-gray-200 focus:bg-white">
+          <input type="text" name="q" placeholder="ძებნა…" class="input !rounded-full !pl-9 !py-2 bg-gray-50 border-gray-200 focus:bg-white">
         </div>
       </form>
       <form method="post" action="{% url 'logout' %}">

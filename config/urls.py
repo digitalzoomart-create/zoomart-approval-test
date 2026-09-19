@@ -15,6 +15,6 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-admin.site.site_header = "Zoomart — ხარჯებისა და მოთხოვნების ადმინისტრირება"
-admin.site.site_title = "Zoomart ადმინი"
+admin.site.site_header = "ZooFlow — Zoomart-ის ხარჯებისა და მოთხოვნების ადმინისტრირება"
+admin.site.site_title = "ZooFlow ადმინი"
 admin.site.index_title = "სისტემის კონფიგურაცია"

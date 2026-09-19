@@ -19,7 +19,7 @@ from core.models import ApprovalStepRule
 
 logger = logging.getLogger(__name__)
 
-SUBJECT_KA = "მოთხოვნა {number} ელოდება თქვენს დამტკიცებას — Zoomart"
+SUBJECT_KA = "მოთხოვნა {number} ელოდება თქვენს დამტკიცებას — ZooFlow"
 
 BODY_KA = """გამარჯობა,
 
@@ -32,7 +32,7 @@ BODY_KA = """გამარჯობა,
 ნახეთ და გადაწყვიტეთ აქ:
 {link}
 
-ეს არის ავტომატური შეტყობინება Zoomart-ის ხარჯებისა და მოთხოვნების სისტემიდან.
+ეს არის ავტომატური შეტყობინება ZooFlow-დან — Zoomart-ის ხარჯებისა და მოთხოვნების სისტემა.
 """
 
 
