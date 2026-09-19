@@ -77,7 +77,7 @@
         <h2 class="section-label mb-4">მოთხოვნის ინფორმაცია</h2>
         <dl class="grid grid-cols-2 gap-y-4 text-sm">
           <div><dt class="text-gray-400 mb-0.5">მომთხოვნელი</dt><dd class="font-medium">{{ obj.requester }}</dd></div>
-          <div><dt class="text-gray-400 mb-0.5">დეპარტამენტი</dt><dd class="font-medium">{{ obj.department }}</dd></div>
+          <div><dt class="text-gray-400 mb-0.5">დეპარტამენტი</dt><dd class="font-medium">{{ obj.department|default:"—" }}</dd></div>
           <div><dt class="text-gray-400 mb-0.5">კატეგორია</dt><dd class="font-medium">{{ obj.category }}</dd></div>
           <div><dt class="text-gray-400 mb-0.5">ტიპი</dt><dd class="font-medium">{{ obj.get_request_type_display }}</dd></div>
           <div><dt class="text-gray-400 mb-0.5">რაოდენობა</dt><dd class="font-medium">{{ obj.quantity }}</dd></div>

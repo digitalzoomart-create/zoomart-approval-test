@@ -37,7 +37,7 @@ def get_matching_rule(*, amount, department_id, category_id):
 
 def _resolve_assigned_to(step, request_obj):
     if step.approver_role == ApprovalStepRule.ROLE_DEPARTMENT_MANAGER:
-        return request_obj.department.manager
+        return request_obj.department.manager if request_obj.department_id else None
     if step.approver_role == ApprovalStepRule.ROLE_SPECIFIC_USER:
         return step.specific_user
     return None  # FINANCE / SENIOR_MANAGER: any user with that role/group may act
@@ -46,6 +46,10 @@ def _resolve_assigned_to(step, request_obj):
 def _build_steps(request_obj, rule):
     request_obj.approval_steps.all().delete()
     steps = []
+    # The company director (Senior Management) is the highest approval rung —
+    # there is nobody above them to sign off, so their own requests skip every
+    # step and go straight to Finance, whether or not a department is set.
+    requester_is_top_rung = request_obj.requester.is_senior_management
     for step_rule in rule.steps.order_by("order"):
         assigned_to = _resolve_assigned_to(step_rule, request_obj)
         step = RequestApproval(
@@ -54,17 +58,28 @@ def _build_steps(request_obj, rule):
             approver_role=step_rule.approver_role,
             assigned_to=assigned_to,
         )
-        # If this step's approver would be the requester themselves (e.g. the
-        # department director submits their own request), that step is not
-        # skipped just at approval-time (they could never approve their own
-        # request anyway) — it is bypassed entirely, up front, so the chain
-        # moves straight on to the next approver instead of getting stuck.
-        if assigned_to is not None and assigned_to.id == request_obj.requester_id:
-            step.decision = RequestApproval.DECISION_SKIPPED
-            step.comment = (
+        skip_reason = None
+        if requester_is_top_rung:
+            skip_reason = (
+                "ავტომატურად გამოტოვებულია — მოთხოვნის ავტორი კომპანიის დირექტორია, "
+                "დამტკიცების უმაღლესი რგოლი."
+            )
+        elif step_rule.approver_role == ApprovalStepRule.ROLE_DEPARTMENT_MANAGER and request_obj.department_id is None:
+            skip_reason = "ავტომატურად გამოტოვებულია — მოთხოვნას არ აქვს მიბმული დეპარტამენტი."
+        elif assigned_to is not None and assigned_to.id == request_obj.requester_id:
+            # If this step's approver would be the requester themselves (e.g.
+            # the department director submits their own request), that step
+            # is not skipped just at approval-time (they could never approve
+            # their own request anyway) — it is bypassed entirely, up front,
+            # so the chain moves straight on to the next approver instead of
+            # getting stuck.
+            skip_reason = (
                 "ავტომატურად გამოტოვებულია — მოთხოვნის ავტორი თავად არის "
                 "ამ საფეხურის დამტკიცებელი."
             )
+        if skip_reason:
+            step.decision = RequestApproval.DECISION_SKIPPED
+            step.comment = skip_reason
             step.decided_at = timezone.now()
         steps.append(step)
     RequestApproval.objects.bulk_create(steps)
@@ -83,6 +98,7 @@ def _activate_next_step(request_obj):
     if newly_activated:
         next_step.decision = RequestApproval.DECISION_PENDING
         next_step.save()
+    newly_approved = next_step is None and request_obj.status != Request.STATUS_APPROVED
     if next_step is None:
         request_obj.status = Request.STATUS_APPROVED
         request_obj.current_approver = None
@@ -94,6 +110,10 @@ def _activate_next_step(request_obj):
     request_obj.save()
     if newly_activated:
         notifications.notify_step_activated(request_obj, next_step)
+    if newly_approved:
+        # The request just finished approval (with no steps left, or every
+        # step skipped) — Finance can start the purchase right away.
+        notifications.notify_ready_for_finance(request_obj)
 
 
 def submit_request(request_obj, actor):
@@ -101,7 +121,9 @@ def submit_request(request_obj, actor):
         raise ApprovalError("მხოლოდ მომთხოვნელს (ან ადმინისტრატორს) შეუძლია ამ მოთხოვნის გაგზავნა.")
     if request_obj.status not in (Request.STATUS_DRAFT, Request.STATUS_MORE_INFO):
         raise ApprovalError("გაგზავნა შესაძლებელია მხოლოდ 'მონახაზი' ან 'საჭიროა დამატებითი ინფორმაცია' სტატუსში მყოფი მოთხოვნისთვის.")
-    if request_obj.department.manager_id is None:
+    # A department-less request (company director / other company-wide
+    # roles) has no department manager to require — nothing to check.
+    if request_obj.department_id and request_obj.department.manager_id is None and not actor.is_senior_management:
         raise ApprovalError(
             f"დეპარტამენტს '{request_obj.department}' ჯერ არ ჰყავს დანიშნული მენეჯერი — "
             "სთხოვეთ ადმინისტრატორს, დანიშნოს მენეჯერი სანამ ეს მოთხოვნა გაიგზავნება."

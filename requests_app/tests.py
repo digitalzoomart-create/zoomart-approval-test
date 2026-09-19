@@ -154,6 +154,25 @@ class SelfSubmissionSkipTests(BaseWorkflowTestCase):
         req.refresh_from_db()
         self.assertEqual(req.status, Request.STATUS_APPROVED)
 
+    def test_company_director_submitting_own_request_with_no_department_auto_approves(self):
+        # The company director is the highest approval rung — their own
+        # request needs nobody's sign-off (and may have no department at
+        # all), so it should go straight to APPROVED, ready for Finance.
+        req = self._make_request(self.director, None, 1500)
+        services.submit_request(req, self.director)
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+        for step in req.approval_steps.all():
+            self.assertEqual(step.decision, RequestApproval.DECISION_SKIPPED)
+
+    def test_company_director_submitting_own_request_with_a_department_still_auto_approves(self):
+        # Even if a department happens to be set, the director's own request
+        # still skips every step — nobody outranks them to approve it.
+        req = self._make_request(self.director, self.dept_a, 1500)
+        services.submit_request(req, self.director)
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+
 
 class ProcurementManagerOversightTests(BaseWorkflowTestCase):
     def test_procurement_manager_can_view_any_request(self):
@@ -194,7 +213,20 @@ class NotificationTests(BaseWorkflowTestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(self.director.email, mail.outbox[0].to)
 
-    def test_finance_is_never_emailed(self):
+    def test_finance_is_not_emailed_before_the_request_is_fully_approved(self):
+        from django.core import mail
+
+        self.manager_a.email = "manager_a@zoomart.ge"
+        self.manager_a.save()
+        self.finance_user.email = "finance@zoomart.ge"
+        self.finance_user.save()
+        req = self._make_request(self.employee_a, self.dept_a, 1500)
+        mail.outbox = []
+        services.submit_request(req, self.employee_a)
+        for msg in mail.outbox:
+            self.assertNotIn(self.finance_user.email, msg.to)
+
+    def test_finance_is_emailed_once_request_is_fully_approved(self):
         from django.core import mail
 
         self.manager_a.email = "manager_a@zoomart.ge"
@@ -208,8 +240,21 @@ class NotificationTests(BaseWorkflowTestCase):
         services.approve(req, self.manager_a, "ok")
         mail.outbox = []
         services.approve(req, self.director, "ok")
-        for msg in mail.outbox:
-            self.assertNotIn(self.finance_user.email, msg.to)
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.finance_user.email, mail.outbox[0].to)
+
+    def test_finance_is_emailed_when_company_directors_own_request_auto_approves(self):
+        from django.core import mail
+
+        self.finance_user.email = "finance@zoomart.ge"
+        self.finance_user.save()
+        req = self._make_request(self.director, None, 1500)
+        mail.outbox = []
+        services.submit_request(req, self.director)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.finance_user.email, mail.outbox[0].to)
 
 
 class SelfApprovalTests(BaseWorkflowTestCase):
@@ -522,3 +567,40 @@ class RaceConditionTests(BaseWorkflowTestCase):
         # A second approval attempt must fail cleanly, not double-advance the workflow.
         with self.assertRaises(services.ApprovalError):
             services.approve(req, self.manager_a, "second approval attempt")
+
+
+class RequestFormDepartmentFieldTests(BaseWorkflowTestCase):
+    """The department field must be locked to the user's own department for
+    employees/department directors, and optional (free choice) for the
+    company director and other company-wide roles."""
+
+    def test_department_field_locked_and_prefilled_for_employee(self):
+        from .forms import RequestForm
+
+        form = RequestForm(user=self.employee_a)
+        self.assertTrue(form.fields["department"].disabled)
+        self.assertEqual(form.initial["department"], self.dept_a.id)
+        self.assertEqual(list(form.fields["department"].queryset), [self.dept_a])
+
+    def test_department_field_not_required_for_company_director(self):
+        from .forms import RequestForm
+
+        form = RequestForm(user=self.director)
+        self.assertFalse(form.fields["department"].disabled)
+        self.assertFalse(form.fields["department"].required)
+
+    def test_employee_cannot_submit_a_different_department_via_post(self):
+        # Even if a manipulated request tried to smuggle a different
+        # department id in, a disabled field ignores POST data entirely and
+        # falls back to its initial value.
+        from .forms import RequestForm
+
+        data = {
+            "title": "t", "description": "d", "department": self.dept_b.id,
+            "category": self.category.id, "request_type": "PURCHASE", "priority": "MEDIUM",
+            "estimated_cost": "10", "currency": "GEL", "quantity": 1,
+            "business_justification": "because",
+        }
+        form = RequestForm(data, user=self.employee_a)
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["department"], self.dept_a)

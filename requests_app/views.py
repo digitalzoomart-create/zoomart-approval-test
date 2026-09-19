@@ -138,6 +138,12 @@ def request_list(request):
 
     from core.models import Department, RequestCategory
 
+    # Employees and department directors only ever see their own department's
+    # requests anyway (visible_requests_qs already restricts it), so a
+    # department filter is meaningless noise for them — only company-wide
+    # roles, who genuinely see multiple departments, get to filter by one.
+    show_department_filter = user.is_admin_role or user.is_senior_management or user.is_finance or user.is_procurement_manager
+
     return render(
         request,
         "requests/list.html",
@@ -150,6 +156,7 @@ def request_list(request):
             "categories": RequestCategory.objects.filter(is_active=True),
             "priorities": Request.PRIORITY_CHOICES,
             "can_export": can_export,
+            "show_department_filter": show_department_filter,
         },
     )
 

@@ -24,10 +24,12 @@
     <option value="">ყველა სტატუსი</option>
     {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
+  {% if show_department_filter %}
   <select name="department" class="input">
     <option value="">ყველა დეპარტამენტი</option>
     {% for d in departments %}<option value="{{ d.pk }}" {% if request.GET.department == d.pk|stringformat:'s' %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
   </select>
+  {% endif %}
   <select name="category" class="input">
     <option value="">ყველა კატეგორია</option>
     {% for c in categories %}<option value="{{ c.pk }}" {% if request.GET.category == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
@@ -73,7 +75,7 @@
         <td class="font-medium text-gray-900">{{ r.request_number }}</td>
         <td>{{ r.title }}</td>
         <td>{{ r.requester }}</td>
-        <td>{{ r.department }}</td>
+        <td>{{ r.department|default:"—" }}</td>
         <td>{{ r.estimated_cost }} {{ r.currency }}</td>
         <td>{{ r.get_priority_display }}</td>
         <td><span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span></td>

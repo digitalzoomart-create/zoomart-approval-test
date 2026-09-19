@@ -1,10 +1,8 @@
 {% extends "base.html" %}
 {% block title %}დეშბორდი — ZooFlow{% endblock %}
 {% block content %}
-<h1 class="text-2xl font-bold tracking-tight mb-1">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
-{% if user.is_senior_management %}
-<p class="text-sm text-gray-500 mb-8">აი, რა ხდება კომპანიაში დღეს.</p>
-{% else %}
+<h1 class="text-2xl font-bold tracking-tight {% if user.is_senior_management %}mb-8{% else %}mb-1{% endif %}">კეთილი იყოს თქვენი მობრძანება, {{ user.get_full_name|default:user.username }}</h1>
+{% if not user.is_senior_management %}
 <p class="text-sm text-gray-500 mb-8">აი, რა ხდება თქვენს მოთხოვნებთან დაკავშირებით დღეს.</p>
 {% endif %}
 

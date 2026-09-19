@@ -96,7 +96,10 @@ class Request(models.Model):
     requester = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="requests"
     )
-    department = models.ForeignKey(Department, on_delete=models.PROTECT, related_name="requests")
+    department = models.ForeignKey(
+        Department, on_delete=models.PROTECT, related_name="requests", null=True, blank=True,
+        help_text="ცარიელი დატოვება შესაძლებელია კომპანიის დირექტორისა და სხვა კომპანიის მასშტაბის როლებისთვის.",
+    )
     category = models.ForeignKey(RequestCategory, on_delete=models.PROTECT, related_name="requests")
     request_type = models.CharField(max_length=32, choices=REQUEST_TYPE_CHOICES, default="PURCHASE")
     priority = models.CharField(max_length=10, choices=PRIORITY_CHOICES, default=PRIORITY_MEDIUM)

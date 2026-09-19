@@ -34,8 +34,18 @@ class RequestForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields["category"].queryset = RequestCategory.objects.filter(is_active=True)
         self.fields["department"].queryset = Department.objects.filter(is_active=True)
-        if user is not None and not user.is_admin_role and user.department_id:
-            self.initial.setdefault("department", user.department_id)
+        # Employees and department directors belong to exactly one department
+        # and must never be able to file a request under a different one —
+        # only company-wide roles (Admin, Senior Management, Finance,
+        # Procurement Manager) get a free choice here.
+        is_company_wide = (
+            user is not None
+            and (user.is_admin_role or user.is_senior_management or user.is_finance or user.is_procurement_manager)
+        )
+        if user is not None and not is_company_wide and user.department_id:
+            self.initial["department"] = user.department_id
+            self.fields["department"].queryset = Department.objects.filter(pk=user.department_id)
+            self.fields["department"].disabled = True
         _style(self.fields)
 
     def clean_estimated_cost(self):
