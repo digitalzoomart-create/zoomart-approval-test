@@ -133,6 +133,17 @@ EMAIL_BACKEND = (
 EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
 EMAIL_PORT = env("EMAIL_PORT", default=587, cast=int)
 EMAIL_USE_TLS = env("EMAIL_USE_TLS", default=True, cast=bool)
+# A hard timeout on the SMTP connection itself. Without this, a blocked or
+# unreachable SMTP port (e.g. Render's free-tier plan, which blocks all
+# outbound SMTP ports) makes the connection attempt hang indefinitely —
+# long enough to blow past gunicorn's own worker timeout, which kills the
+# whole worker process with SystemExit. SystemExit is a BaseException, so
+# it skips right past our `except Exception` in notifications.py and takes
+# down the entire request-submit/approve action with it, not just the
+# email. A short, explicit timeout turns that hang into an ordinary
+# socket.timeout well before gunicorn's timeout fires, so it degrades to
+# "email logged as failed" instead of "the approval action itself crashes".
+EMAIL_TIMEOUT = env("EMAIL_TIMEOUT", default=10, cast=int)
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default=EMAIL_HOST_USER or "noreply@zoomart.ge")
 
 # Used to build absolute links (e.g. "ნახეთ მოთხოვნა") inside notification emails.
