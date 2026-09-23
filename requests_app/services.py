@@ -13,6 +13,7 @@ from .models import Request, RequestApproval
 
 STATUS_FOR_ROLE = {
     ApprovalStepRule.ROLE_DEPARTMENT_MANAGER: Request.STATUS_PENDING_MANAGER,
+    ApprovalStepRule.ROLE_PROCUREMENT_MANAGER: Request.STATUS_PENDING_PROCUREMENT,
     ApprovalStepRule.ROLE_FINANCE: Request.STATUS_PENDING_FINANCE,
     ApprovalStepRule.ROLE_SENIOR_MANAGER: Request.STATUS_PENDING_SENIOR,
     ApprovalStepRule.ROLE_SPECIFIC_USER: Request.STATUS_PENDING_MANAGER,
@@ -166,6 +167,7 @@ def submit_request(request_obj, actor):
 ROLE_GROUP_LABELS_KA = {
     "Finance": "ფინანსები",
     "Senior Management": "უფროსი მენეჯმენტი",
+    "Procurement Manager": "შესყიდვების მენეჯერი",
 }
 
 
@@ -181,6 +183,7 @@ def _authorize_actor_for_step(request_obj, step, actor):
     role_group = {
         ApprovalStepRule.ROLE_FINANCE: "Finance",
         ApprovalStepRule.ROLE_SENIOR_MANAGER: "Senior Management",
+        ApprovalStepRule.ROLE_PROCUREMENT_MANAGER: "Procurement Manager",
     }.get(step.approver_role)
     if role_group and not actor.has_role(role_group):
         raise ApprovalError(f"ეს საფეხური მოითხოვს '{ROLE_GROUP_LABELS_KA.get(role_group, role_group)}' როლს.")

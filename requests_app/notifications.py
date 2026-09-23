@@ -85,13 +85,22 @@ def _send(*, to_emails, request_obj, subject_template=SUBJECT_KA, body_template=
 def notify_step_activated(request_obj, step):
     """Call right after `step` becomes the active (PENDING) approval step.
 
-    Emails only the department director or the company director, and only
-    when it is genuinely their turn to act — not on submission, not for
-    every step.
+    Emails only the department director, the procurement manager, or the
+    company director, and only when it is genuinely their turn to act —
+    not on submission, not for every step.
     """
     if step.approver_role == ApprovalStepRule.ROLE_DEPARTMENT_MANAGER:
         if step.assigned_to and step.assigned_to.email:
             _send(to_emails=[step.assigned_to.email], request_obj=request_obj)
+    elif step.approver_role == ApprovalStepRule.ROLE_PROCUREMENT_MANAGER:
+        User = get_user_model()
+        emails = list(
+            User.objects.filter(groups__name="Procurement Manager", is_active=True)
+            .exclude(email="")
+            .values_list("email", flat=True)
+            .distinct()
+        )
+        _send(to_emails=emails, request_obj=request_obj)
     elif step.approver_role == ApprovalStepRule.ROLE_SENIOR_MANAGER:
         User = get_user_model()
         emails = list(

@@ -101,11 +101,13 @@ class ApprovalWorkflowRule(models.Model):
 
 class ApprovalStepRule(models.Model):
     ROLE_DEPARTMENT_MANAGER = "DEPARTMENT_MANAGER"
+    ROLE_PROCUREMENT_MANAGER = "PROCUREMENT_MANAGER"
     ROLE_FINANCE = "FINANCE"
     ROLE_SENIOR_MANAGER = "SENIOR_MANAGER"
     ROLE_SPECIFIC_USER = "SPECIFIC_USER"
     ROLE_CHOICES = [
         (ROLE_DEPARTMENT_MANAGER, "დეპარტამენტის დირექტორი"),
+        (ROLE_PROCUREMENT_MANAGER, "შესყიდვების მენეჯერი"),
         (ROLE_FINANCE, "ფინანსები"),
         (ROLE_SENIOR_MANAGER, "კომპანიის დირექტორი"),
         (ROLE_SPECIFIC_USER, "კონკრეტული პირი"),

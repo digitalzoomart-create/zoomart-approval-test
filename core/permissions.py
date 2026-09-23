@@ -26,9 +26,15 @@ def can_view_request(user, req):
 
 
 def can_edit_request(user, req):
-    if not req.is_editable:
-        return False
-    return req.requester_id == user.id or user.is_admin_role
+    if req.is_editable:
+        return req.requester_id == user.id or user.is_admin_role
+    # While a request is sitting with the Procurement Manager step, they
+    # take full ownership of its details (confirming/correcting vendor,
+    # pricing, quantities, etc.) before forwarding it on to the next
+    # approver — so they get a full edit, not just approve/reject/comment.
+    if req.status == req.STATUS_PENDING_PROCUREMENT:
+        return can_act_as_approver(user, req)
+    return False
 
 
 def can_comment(user, req):
@@ -47,6 +53,8 @@ def can_act_as_approver(user, req):
     if req.current_approver_id is None and req.current_approver_role in ("FINANCE",) and user.is_finance:
         return True
     if req.current_approver_id is None and req.current_approver_role in ("SENIOR_MANAGER",) and user.is_senior_management:
+        return True
+    if req.current_approver_id is None and req.current_approver_role in ("PROCUREMENT_MANAGER",) and user.is_procurement_manager:
         return True
     return False
 

@@ -20,6 +20,13 @@ class BaseWorkflowTestCase(TestCase):
         for name in ["Employee", "Manager", "Finance", "Administrator", "Senior Management", "Procurement Manager"]:
             Group.objects.get_or_create(name=name)
 
+        # Migrations may seed their own default ApprovalWorkflowRule (e.g. the
+        # production data migration that unifies all amounts onto one chain)
+        # so every test starts from a clean slate here regardless, and only
+        # ever routes through the rules this class explicitly builds below.
+        ApprovalStepRule.objects.all().delete()
+        ApprovalWorkflowRule.objects.all().delete()
+
         self.dept_a = Department.objects.create(name="Marketing")
         self.dept_b = Department.objects.create(name="IT")
         self.category = RequestCategory.objects.create(name="Office Supplies")
@@ -187,6 +194,111 @@ class ProcurementManagerOversightTests(BaseWorkflowTestCase):
         self.assertFalse(can_act_as_approver(self.procurement_manager, req))
 
 
+class ProcurementManagerApprovalStepTests(BaseWorkflowTestCase):
+    """GIO's request: insert a Procurement Manager step between the
+    department director and the company director. Unlike the oversight-only
+    tests above, these build a workflow rule that actually includes
+    PROCUREMENT_MANAGER as a step, so the procurement manager becomes a real
+    approver (with full edit rights) for the duration of their turn."""
+
+    def _make_three_step_rule(self, category):
+        rule = ApprovalWorkflowRule.objects.create(
+            name="Manager-Procurement-Senior", category=category, min_amount=0, max_amount=None, priority=100,
+        )
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=2, approver_role=ApprovalStepRule.ROLE_PROCUREMENT_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=rule, order=3, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
+        return rule
+
+    def _make_pending_procurement_request(self):
+        category = RequestCategory.objects.create(name="Procurement-step category")
+        self._make_three_step_rule(category)
+        req = Request.objects.create(
+            requester=self.employee_a, department=self.dept_a, category=category,
+            title="Needs procurement processing", description="desc", business_justification="because",
+            estimated_cost=5000,
+        )
+        services.submit_request(req, self.employee_a)
+        services.approve(req, self.manager_a, "ok")
+        req.refresh_from_db()
+        return req
+
+    def test_status_moves_to_pending_procurement_after_department_director_approves(self):
+        req = self._make_pending_procurement_request()
+        self.assertEqual(req.status, Request.STATUS_PENDING_PROCUREMENT)
+        self.assertIsNone(req.current_approver_id, "role-based step, not tied to one specific user")
+        self.assertEqual(req.current_approver_role, ApprovalStepRule.ROLE_PROCUREMENT_MANAGER)
+
+    def test_only_procurement_manager_role_or_admin_can_act_on_the_step(self):
+        from core.permissions import can_act_as_approver
+
+        req = self._make_pending_procurement_request()
+        self.assertTrue(can_act_as_approver(self.procurement_manager, req))
+        self.assertFalse(can_act_as_approver(self.director, req), "not their turn yet")
+        self.assertFalse(can_act_as_approver(self.manager_a, req), "already decided their own step")
+        with self.assertRaises(services.ApprovalError):
+            services.approve(req, self.director, "trying to jump the queue")
+
+    def test_procurement_manager_can_fully_edit_the_request_during_their_step(self):
+        from core.permissions import can_edit_request
+
+        req = self._make_pending_procurement_request()
+        self.assertTrue(can_edit_request(self.procurement_manager, req))
+
+        client = Client()
+        client.force_login(self.procurement_manager)
+        resp = client.post(f"/requests/{req.pk}/edit/", {
+            "title": "Corrected by procurement", "description": "desc",
+            "department": self.dept_a.id, "category": req.category_id,
+            "request_type": "PURCHASE", "priority": "MEDIUM",
+            "estimated_cost": "4750", "currency": "GEL", "quantity": 1,
+            "business_justification": "because",
+        })
+        self.assertEqual(resp.status_code, 302, "edit should be accepted, not blocked")
+        req.refresh_from_db()
+        self.assertEqual(req.title, "Corrected by procurement")
+        self.assertEqual(req.estimated_cost, 4750)
+
+    def test_other_roles_cannot_edit_during_the_procurement_step(self):
+        from core.permissions import can_edit_request
+
+        req = self._make_pending_procurement_request()
+        self.assertFalse(can_edit_request(self.employee_a, req), "requester loses edit rights once it's out of their hands")
+        self.assertFalse(can_edit_request(self.director, req))
+        self.assertFalse(can_edit_request(self.finance_user, req))
+
+    def test_procurement_manager_approval_forwards_to_company_director(self):
+        req = self._make_pending_procurement_request()
+        services.approve(req, self.procurement_manager, "შემოწმებულია, ფასები დადასტურებულია.")
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_PENDING_SENIOR)
+
+        services.approve(req, self.director, "ok")
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_APPROVED)
+
+    def test_procurement_manager_is_emailed_when_their_step_activates(self):
+        from django.core import mail
+
+        self.manager_a.email = "manager_a@zoomart.ge"
+        self.manager_a.save()
+        self.procurement_manager.email = "procurement@zoomart.ge"
+        self.procurement_manager.save()
+
+        category = RequestCategory.objects.create(name="Procurement-email category")
+        self._make_three_step_rule(category)
+        req = Request.objects.create(
+            requester=self.employee_a, department=self.dept_a, category=category,
+            title="Needs procurement processing", description="desc", business_justification="because",
+            estimated_cost=5000,
+        )
+        services.submit_request(req, self.employee_a)
+        mail.outbox = []
+        services.approve(req, self.manager_a, "ok")
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn(self.procurement_manager.email, mail.outbox[0].to)
+
+
 class NotificationTests(BaseWorkflowTestCase):
     def test_department_director_is_emailed_when_their_approval_is_needed(self):
         from django.core import mail
@@ -255,6 +367,30 @@ class NotificationTests(BaseWorkflowTestCase):
         services.submit_request(req, self.director)
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn(self.finance_user.email, mail.outbox[0].to)
+
+    def test_submit_still_succeeds_when_the_smtp_connection_itself_fails(self):
+        # Regression test: on Render's free plan, outbound SMTP ports are
+        # blocked entirely, so a real connection attempt used to hang until
+        # gunicorn's worker timeout killed the whole request with a
+        # SystemExit — which skipped straight past our `except Exception`
+        # and turned a notification failure into a crashed submission.
+        # EMAIL_TIMEOUT now bounds that hang to an ordinary exception, and
+        # this confirms _send()'s try/except still swallows it: submitting
+        # a request must succeed and leave it correctly routed even when
+        # the mail server can't be reached at all.
+        from unittest import mock
+
+        self.manager_a.email = "manager_a@zoomart.ge"
+        self.manager_a.save()
+        req = self._make_request(self.employee_a, self.dept_a, 1500)
+        with mock.patch(
+            "requests_app.notifications.send_mail",
+            side_effect=TimeoutError("simulated blocked SMTP port"),
+        ):
+            services.submit_request(req, self.employee_a)
+        req.refresh_from_db()
+        self.assertEqual(req.status, Request.STATUS_PENDING_MANAGER)
+        self.assertEqual(req.current_approver_id, self.manager_a.id)
 
 
 class SelfApprovalTests(BaseWorkflowTestCase):

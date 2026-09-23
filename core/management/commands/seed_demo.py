@@ -97,19 +97,23 @@ class Command(BaseCommand):
 
         ApprovalWorkflowRule.objects.all().delete()
 
-        # Small purchases: department director's approval is enough.
-        tier1 = ApprovalWorkflowRule.objects.create(name="500 ლარამდე", min_amount=0, max_amount=500, priority=10)
-        ApprovalStepRule.objects.create(workflow_rule=tier1, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
-
-        # Everything above that: department director -> company director.
-        # Once the company director approves, the request is fully APPROVED —
-        # Finance does not re-approve it, they just execute the purchase
-        # (see the finance execution steps below and services.mark_*).
-        # (If the department director is the one submitting, their own step is
-        # skipped automatically — see services._build_steps.)
-        tier2 = ApprovalWorkflowRule.objects.create(name="500 ლარზე მეტი", min_amount=500.01, max_amount=None, priority=10)
-        ApprovalStepRule.objects.create(workflow_rule=tier2, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
-        ApprovalStepRule.objects.create(workflow_rule=tier2, order=2, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
+        # GIO: every request, at any amount, goes through the same full
+        # three-step chain now — no more small-purchase shortcut. The
+        # department director approves first, then the procurement manager
+        # takes the request (can edit/correct it in full — vendor, pricing,
+        # quantities — while it's their turn) and forwards it on, then the
+        # company director gives the final approval. Once the company
+        # director approves, the request is fully APPROVED — Finance does
+        # not re-approve it, they just execute the purchase (see the
+        # finance execution steps below and services.mark_*).
+        # (If the department director is the one submitting, their own step
+        # is skipped automatically — see services._build_steps.)
+        all_amounts = ApprovalWorkflowRule.objects.create(
+            name="ყველა მოთხოვნა — სრული დამტკიცების ჯაჭვი", min_amount=0, max_amount=None, priority=10,
+        )
+        ApprovalStepRule.objects.create(workflow_rule=all_amounts, order=1, approver_role=ApprovalStepRule.ROLE_DEPARTMENT_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=all_amounts, order=2, approver_role=ApprovalStepRule.ROLE_PROCUREMENT_MANAGER)
+        ApprovalStepRule.objects.create(workflow_rule=all_amounts, order=3, approver_role=ApprovalStepRule.ROLE_SENIOR_MANAGER)
 
         cat = lambda n: RequestCategory.objects.get(name=n)
         today = datetime.date.today()
@@ -136,6 +140,7 @@ class Command(BaseCommand):
         r4 = make(employee1, marketing, "მარკეტინგი", "Instagram ინფლუენსერების კამპანია — გაზაფხული", 1800, "საგაზაფხულო კამპანია ცხოველების საკვების კატეგორიის გასაძლიერებლად.")
         services.submit_request(r4, employee1)
         services.approve(r4, mkt_manager, "შეესაბამება Q2 მარკეტინგულ გეგმას.")
+        services.approve(r4, procurement_manager, "შეთანხმებულია ინფლუენსერებთან ფასები, გადაცემულია დირექტორთან.")
         services.approve(r4, director, "დამტკიცებულია კომპანიის დონეზე.")
         r4.comments.create(author=finance_user, message="ბიუჯეტი ხელმისაწვდომია, ვიწყებთ შესყიდვას.")
         services.mark_purchase_in_progress(r4, finance_user)
@@ -150,6 +155,7 @@ class Command(BaseCommand):
         r6 = make(employee3, retail, "აღჭურვილობა", "სამაცივრო კამერის შეკეთება — საბურთალოს ფილიალი", 15000, "მაცივარი უმართავდება, სახიფათოა გაყინული პროდუქციის დაკარგვა.")
         services.submit_request(r6, employee3)
         services.approve(r6, retail_manager, "სასწრაფოა, დაუყოვნებლივ ვამტკიცებ.")
+        services.approve(r6, procurement_manager, "დამუშავებულია, გადაცემულია კომპანიის დირექტორთან დასამტკიცებლად.")
         services.reject(r6, director, "მოიტანეთ ორი კონკურენტული შეთავაზება, სანამ ამ მასშტაბის შეკეთებას დავამტკიცებთ.")
 
         # Demonstrates the "department director submits their own request" case:
@@ -163,6 +169,7 @@ class Command(BaseCommand):
         r8 = make(employee2, it_dept, "IT აღჭურვილობა", "მონიტორები — 4 ცალი დიზაინის გუნდისთვის", 2400, "მიმდინარე მონიტორები მოძველებულია, ანელებს მუშაობას.")
         services.submit_request(r8, employee2)
         services.approve(r8, it_manager, "საჭირო აღჭურვილობაა.")
+        services.approve(r8, procurement_manager, "შეთანხმებულია მიმწოდებელთან, გადაცემულია დირექტორთან.")
         services.approve(r8, director, "დამტკიცებულია.")
 
         self.stdout.write(self.style.SUCCESS("დემო მონაცემები შეიქმნა."))

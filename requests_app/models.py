@@ -19,6 +19,7 @@ class Request(models.Model):
     STATUS_DRAFT = "DRAFT"
     STATUS_SUBMITTED = "SUBMITTED"
     STATUS_PENDING_MANAGER = "PENDING_MANAGER_APPROVAL"
+    STATUS_PENDING_PROCUREMENT = "PENDING_PROCUREMENT_REVIEW"
     STATUS_MORE_INFO = "MORE_INFO_REQUIRED"
     STATUS_MANAGER_APPROVED = "MANAGER_APPROVED"
     STATUS_PENDING_FINANCE = "PENDING_FINANCE_REVIEW"
@@ -35,6 +36,7 @@ class Request(models.Model):
         (STATUS_DRAFT, "მონახაზი"),
         (STATUS_SUBMITTED, "გაგზავნილი"),
         (STATUS_PENDING_MANAGER, "დეპარტამენტის დირექტორის დამტკიცების მოლოდინში"),
+        (STATUS_PENDING_PROCUREMENT, "შესყიდვების მენეჯერის დამუშავების მოლოდინში"),
         (STATUS_MORE_INFO, "საჭიროა დამატებითი ინფორმაცია"),
         (STATUS_MANAGER_APPROVED, "დეპარტამენტის დირექტორმა დაამტკიცა"),
         (STATUS_PENDING_FINANCE, "ფინანსების განხილვის მოლოდინში"),
@@ -49,13 +51,14 @@ class Request(models.Model):
     ]
 
     OPEN_STATUSES = [
-        STATUS_SUBMITTED, STATUS_PENDING_MANAGER, STATUS_MORE_INFO,
+        STATUS_SUBMITTED, STATUS_PENDING_MANAGER, STATUS_PENDING_PROCUREMENT, STATUS_MORE_INFO,
         STATUS_MANAGER_APPROVED, STATUS_PENDING_FINANCE, STATUS_PENDING_SENIOR,
     ]
     STATUS_COLORS = {
         STATUS_DRAFT: "gray",
         STATUS_SUBMITTED: "yellow",
         STATUS_PENDING_MANAGER: "yellow",
+        STATUS_PENDING_PROCUREMENT: "yellow",
         STATUS_MORE_INFO: "orange",
         STATUS_MANAGER_APPROVED: "yellow",
         STATUS_PENDING_FINANCE: "yellow",
@@ -234,12 +237,15 @@ class RequestApprovalQuerySet(models.QuerySet):
             role_q |= models.Q(approver_role=ApprovalStepRuleRoleMirror.FINANCE, assigned_to__isnull=True)
         if user.has_role("Senior Management"):
             role_q |= models.Q(approver_role=ApprovalStepRuleRoleMirror.SENIOR_MANAGER, assigned_to__isnull=True)
+        if user.has_role("Procurement Manager"):
+            role_q |= models.Q(approver_role=ApprovalStepRuleRoleMirror.PROCUREMENT_MANAGER, assigned_to__isnull=True)
         return qs.filter(role_q).select_related("request")
 
 
 class ApprovalStepRuleRoleMirror:
     """Tiny helper so this module doesn't need a hard import cycle with core.models."""
     DEPARTMENT_MANAGER = "DEPARTMENT_MANAGER"
+    PROCUREMENT_MANAGER = "PROCUREMENT_MANAGER"
     FINANCE = "FINANCE"
     SENIOR_MANAGER = "SENIOR_MANAGER"
     SPECIFIC_USER = "SPECIFIC_USER"
