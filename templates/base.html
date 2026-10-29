@@ -36,7 +36,7 @@
         <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         <span>ჩემი მოთხოვნები</span>
       </a>
-      {% if user.is_manager or user.is_senior_management or user.is_admin_role %}
+         {% if user.is_manager or user.is_senior_management or user.is_procurement_manager or user.is_admin_role or nav_pending_approvals_count %}
       <a href="{% url 'request_list' %}?scope=approvals" class="nav-link justify-between {% if request.GET.scope == 'approvals' %}is-active{% endif %}">
         <span class="flex items-center gap-2.5">
           <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75l1.5 1.5 4.5-4.5M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
