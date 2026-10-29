@@ -2,29 +2,79 @@
 {% load static %}
 {% block title %}შესვლა — ZooFlow{% endblock %}
 {% block auth_content %}
-<div class="auth-layout">
-  <div class="auth-panel w-full max-w-md">
-    <div class="auth-brand text-center mb-7">
-      <img src="{% static 'img/zooflow.svg' %}" class="auth-wordmark" alt="ZooFlow">
-      <h1 class="auth-title text-lg font-bold tracking-tight">ZooFlow — Zoomart-ის ხარჯებისა და მოთხოვნების სისტემა</h1>
+<div class="login-layout">
+  <section class="login-story" aria-label="ZooFlow">
+    <img src="{% static 'img/zooflow.svg' %}" class="login-wordmark" alt="ZooFlow">
+    <div class="login-story-content">
+      <div class="login-eyebrow"><span></span>ZOOMART WORKSPACE</div>
+      <h2 class="login-story-title">ხარჯები.<br>მოთხოვნები.<br><span>ერთ სივრცეში.</span></h2>
+      <p class="login-story-description">ZooFlow — Zoomart-ის ხარჯებისა და მოთხოვნების სისტემა</p>
+      <div class="login-flow" aria-hidden="true">
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <i></i>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="6" cy="5" r="2.5"/><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="19" r="2.5"/><path d="M6 7.5v9m12-9a9 9 0 01-9 9H6" stroke-linecap="round"/></svg></span>
+        <i></i>
+        <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="m5 12 4 4L19 6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+      </div>
     </div>
-    <div class="card auth-form-card p-6 sm:p-8">
+    <div class="login-story-footer"><span>Zoomart-ის შიდა სისტემა</span><span>ZOOMART</span></div>
+    <div class="login-ribbon" aria-hidden="true"></div>
+  </section>
+  <section class="login-form-panel" aria-labelledby="login-heading">
+    <div class="login-form-container">
+      <div class="login-form-heading">
+        <h1 id="login-heading">შესვლა</h1>
+        <p>კეთილი იყოს თქვენი მობრძანება.<br>შედით თქვენი სამუშაო ანგარიშით.</p>
+      </div>
       {% if form.errors %}
-        <div class="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">არასწორი მომხმარებელი ან პაროლი.</div>
+        <div class="login-error" role="alert">არასწორი მომხმარებელი ან პაროლი.</div>
       {% endif %}
-      <form method="post">
+      <form method="post" class="login-form">
         {% csrf_token %}
-        <div class="mb-4">
-          <label class="field-label">მომხმარებლის სახელი</label>
-          <input type="text" name="username" class="input" autocomplete="username" autofocus required>
+        <div class="login-field">
+          <label class="login-label" for="login-username">მომხმარებლის სახელი</label>
+          <div class="login-control">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="12" cy="8" r="3.5"/><path d="M5 21v-2a7 7 0 0114 0v2" stroke-linecap="round"/></svg>
+            <input id="login-username" type="text" name="username" class="input login-input" autocomplete="username" placeholder="თქვენი მომხმარებლის სახელი" autofocus required>
+          </div>
         </div>
-        <div class="mb-6">
-          <label class="field-label">პაროლი</label>
-          <input type="password" name="password" class="input" autocomplete="current-password" required>
+        <div class="login-field">
+          <label class="login-label" for="login-password">პაროლი</label>
+          <div class="login-control">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V6a4 4 0 018 0v4m-4 5v2" stroke-linecap="round"/></svg>
+            <input id="login-password" type="password" name="password" class="input login-input" autocomplete="current-password" placeholder="შეიყვანეთ პაროლი" required>
+            <button type="button" class="login-eye" id="login-password-toggle" aria-controls="login-password" aria-label="პაროლის ჩვენება" aria-pressed="false" hidden>
+              <svg data-password-show viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+              <svg data-password-hide viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true" hidden><path d="m3 3 18 18M10.6 5.1A13 13 0 0112 5c6.5 0 10 7 10 7a17 17 0 01-3.2 3.9M6 6.7A19 19 0 002 12s3.5 7 10 7a12 12 0 005.2-1.2" stroke-linecap="round"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/></svg>
+            </button>
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary w-full">შესვლა</button>
+        <p id="login-caps-warning" class="login-caps" role="status" aria-live="polite" hidden>Caps Lock ჩართულია</p>
+        <button type="submit" class="login-submit">შესვლა<span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M7 17 17 7M7 7h10v10" stroke-linecap="round" stroke-linejoin="round"/></svg></span></button>
       </form>
+      <div class="login-note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="m12 3 8 4v5c0 5-8 9-8 9s-8-4-8-9V7l8-4z"/><path d="m8 12 3 3 5-5" stroke-linecap="round" stroke-linejoin="round"/></svg>Zoomart-ის შიდა სისტემა</div>
     </div>
-  </div>
+  </section>
 </div>
+<script>
+(() => {
+  const password = document.getElementById('login-password');
+  const toggle = document.getElementById('login-password-toggle');
+  const caps = document.getElementById('login-caps-warning');
+  if (!password || !toggle || !caps) return;
+  toggle.hidden = false;
+  toggle.addEventListener('click', () => {
+    const showing = password.type === 'password';
+    password.type = showing ? 'text' : 'password';
+    toggle.setAttribute('aria-pressed', String(showing));
+    toggle.setAttribute('aria-label', showing ? 'პაროლის დამალვა' : 'პაროლის ჩვენება');
+    toggle.querySelector('[data-password-show]').toggleAttribute('hidden', showing);
+    toggle.querySelector('[data-password-hide]').toggleAttribute('hidden', !showing);
+  });
+  const updateCaps = event => { caps.hidden = !event.getModifierState('CapsLock'); };
+  password.addEventListener('keydown', updateCaps);
+  password.addEventListener('keyup', updateCaps);
+  password.addEventListener('blur', () => { caps.hidden = true; });
+})();
+</script>
 {% endblock %}
