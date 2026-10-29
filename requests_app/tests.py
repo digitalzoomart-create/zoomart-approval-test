@@ -740,3 +740,23 @@ class RequestFormDepartmentFieldTests(BaseWorkflowTestCase):
         form = RequestForm(data, user=self.employee_a)
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["department"], self.dept_a)
+
+
+class ApprovalsNavLinkTests(ProcurementManagerApprovalStepTests):
+    """The sidebar "დასამტკიცებელი" link (with its pending-count badge)
+    must also show for the Procurement Manager, whose step is part of the
+    approval chain — not only for department/company directors."""
+
+    def test_procurement_manager_sees_approvals_link_with_count(self):
+        self._make_pending_procurement_request()
+        client = Client()
+        client.force_login(self.procurement_manager)
+        html = client.get("/").content.decode()
+        self.assertIn("?scope=approvals", html)
+        self.assertIn("დასამტკიცებელი", html)
+        self.assertRegex(html, r'badge badge-yellow">\s*1\s*<')
+
+    def test_plain_employee_does_not_see_approvals_link(self):
+        client = Client()
+        client.force_login(self.employee_b)
+        self.assertNotIn("?scope=approvals", client.get("/").content.decode())
