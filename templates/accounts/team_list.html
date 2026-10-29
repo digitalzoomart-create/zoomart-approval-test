@@ -2,12 +2,13 @@
 {% load ka_labels %}
 {% block title %}გუნდის მართვა — ZooFlow{% endblock %}
 {% block content %}
+<div class="page-view page-team">
 <div class="flex items-center justify-between mb-1">
-  <h1 class="text-2xl font-bold tracking-tight">გუნდის მართვა</h1>
+  <h1 class="page-title text-2xl font-bold tracking-tight">გუნდის მართვა</h1>
 </div>
 <p class="text-sm text-gray-500 mb-6">აქ დაამატებთ თანამშრომლებს, დაავანიშნავთ დეპარტამენტის დირექტორებს და მართავთ როლებს — მარტივად, ერთ გვერდზე.</p>
 
-<div class="flex flex-wrap gap-2 mb-8">
+<div class="team-toolbar flex flex-wrap gap-2 mb-8">
   <a href="{% url 'person_create' %}" class="btn btn-primary">+ ახალი თანამშრომელი</a>
   <a href="{% url 'department_create' %}" class="btn btn-secondary">+ ახალი დეპარტამენტი</a>
   <a href="/admin/" class="btn btn-secondary ml-auto">დამატებითი პარამეტრები (გაფართოებული)</a>
@@ -16,7 +17,7 @@
 {% for dept in departments %}
 <section class="mb-5">
   <div class="card overflow-hidden">
-    <div class="flex items-center justify-between px-5 py-4 bg-gray-50/60 border-b border-gray-50">
+    <div class="team-department-heading flex flex-wrap items-start justify-between gap-4 px-5 py-5 bg-gray-50/60 border-b border-gray-50">
       <div>
         <h2 class="font-semibold">{{ dept.name }}</h2>
         {% if dept.manager %}
@@ -29,14 +30,14 @@
     </div>
     <div class="divide-y divide-gray-50">
       {% for person in dept.members.all %}
-      <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
-        <div class="flex items-center gap-3">
+      <div class="team-person-row flex flex-wrap items-center justify-between gap-4 px-5 py-4 {% if not person.is_active %}opacity-50{% endif %}">
+        <div class="flex flex-wrap items-center gap-3">
           <div>
             <div class="text-sm font-medium">{{ person.get_full_name|default:person.username }}{% if person.pk == dept.manager_id %} <span class="text-xs text-gray-400">(დირექტორი)</span>{% endif %}</div>
             <div class="text-xs text-gray-500">{{ person.username }}{% if person.email %} &middot; {{ person.email }}{% endif %}</div>
           </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex flex-wrap items-center gap-3">
           <span class="badge badge-{{ person.primary_role|role_badge }}">{{ person.primary_role|role_ka }}</span>
           {% if not person.is_active %}<span class="badge badge-gray">არააქტიური</span>{% endif %}
           <a href="{% url 'person_edit' person.pk %}" class="text-sm text-brand-600 hover:underline">რედაქტირება</a>
@@ -61,12 +62,12 @@
   <p class="text-xs text-gray-500 mb-3">ფინანსები, კომპანიის დირექტორი, შესყიდვების მენეჯერი და ადმინისტრატორები — დეპარტამენტს არ საჭიროებენ.</p>
   <div class="card divide-y divide-gray-50">
     {% for person in company_wide %}
-    <div class="flex items-center justify-between px-5 py-2.5 {% if not person.is_active %}opacity-50{% endif %}">
+    <div class="team-person-row flex flex-wrap items-center justify-between gap-4 px-5 py-4 {% if not person.is_active %}opacity-50{% endif %}">
       <div>
         <div class="text-sm font-medium">{{ person.get_full_name|default:person.username }}</div>
         <div class="text-xs text-gray-500">{{ person.username }}{% if person.email %} &middot; {{ person.email }}{% endif %}</div>
       </div>
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <span class="badge badge-{{ person.primary_role|role_badge }}">{{ person.primary_role|role_ka }}</span>
         {% if not person.is_active %}<span class="badge badge-gray">არააქტიური</span>{% endif %}
         <a href="{% url 'person_edit' person.pk %}" class="text-sm text-brand-600 hover:underline">რედაქტირება</a>
@@ -81,4 +82,5 @@
     {% endfor %}
   </div>
 </section>
+</div>
 {% endblock %}

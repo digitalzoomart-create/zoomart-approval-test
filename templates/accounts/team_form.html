@@ -1,17 +1,18 @@
 {% extends "base.html" %}
 {% block title %}{% if is_new %}ახალი თანამშრომელი{% else %}თანამშრომლის რედაქტირება{% endif %} — ZooFlow{% endblock %}
 {% block content %}
-<div class="max-w-lg">
-  <h1 class="text-2xl font-bold tracking-tight mb-1">{% if is_new %}ახალი თანამშრომელი{% else %}რედაქტირება — {{ obj.get_full_name|default:obj.username }}{% endif %}</h1>
+<div class="page-view page-team-form">
+<div class="form-container">
+  <h1 class="page-title text-2xl font-bold tracking-tight mb-1">{% if is_new %}ახალი თანამშრომელი{% else %}რედაქტირება — {{ obj.get_full_name|default:obj.username }}{% endif %}</h1>
   <p class="text-sm text-gray-500 mb-6">შეავსეთ ძირითადი მონაცემები და აირჩიეთ ერთი როლი — ეს განსაზღვრავს რისი ნახვა/გაკეთება შეუძლია ამ ადამიანს.</p>
 
   {% if form.non_field_errors %}
     <div class="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">{{ form.non_field_errors }}</div>
   {% endif %}
 
-  <form method="post" class="card p-7 space-y-5">
+  <form method="post" class="card form-card p-5 sm:p-7 space-y-6">
     {% csrf_token %}
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <div>
         <label class="field-label">{{ form.first_name.label }} *</label>
         {{ form.first_name }}
@@ -56,10 +57,11 @@
       <p class="text-xs text-gray-500 mt-1">თუ როლად აირჩევთ "დეპარტამენტის დირექტორს", ეს ადამიანი ავტომატურად დაინიშნება ამ დეპარტამენტის დირექტორად (ჩაანაცვლებს წინანდელს, თუ ჰყავდა).</p>
     </div>
 
-    <div class="flex gap-3 pt-2">
+    <div class="form-actions flex flex-wrap gap-3 pt-5">
       <button type="submit" class="btn btn-primary">შენახვა</button>
       <a href="{% url 'team_list' %}" class="btn btn-secondary">გაუქმება</a>
     </div>
   </form>
+</div>
 </div>
 {% endblock %}

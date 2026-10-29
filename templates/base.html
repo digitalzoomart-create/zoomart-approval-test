@@ -5,25 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}ZooFlow{% endblock %}</title>
   <link rel="icon" type="image/svg+xml" href="{% static 'img/zoomart-icon.svg' %}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" href="{% static 'fonts/FiraGO-ExtraBold.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/NotoSansGeorgian-400.ttf' %}" as="font" type="font/ttf" crossorigin>
   <link rel="stylesheet" href="/static/dist/output.css">
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen font-sans">
+<body class="app-body min-h-screen font-sans">
 {% if user.is_authenticated %}
-<div class="flex min-h-screen">
-  <aside class="w-64 shrink-0 border-r border-gray-100 bg-white flex flex-col">
-    <div class="px-5 py-5">
-      <div class="flex items-center gap-2.5">
-        <img src="{% static 'img/zoomart-icon.svg' %}" class="h-9 w-9 rounded-lg" alt="ZooFlow">
-        <div class="leading-tight">
-          <div class="font-bold text-[15px] tracking-tight">ZooFlow</div>
-          <div class="text-xs text-gray-400">Zoomart-ის ხარჯები და მოთხოვნები</div>
-        </div>
-      </div>
+<div class="app-shell flex min-h-screen">
+  <button type="button" class="sidebar-backdrop" data-sidebar-dismiss aria-label="მენიუს დახურვა" tabindex="-1" hidden></button>
+  <aside id="app-sidebar" class="app-sidebar shrink-0 flex flex-col" aria-label="ნავიგაცია">
+    <div class="sidebar-brand">
+      <img src="{% static 'img/zooflow.svg' %}" class="brand-wordmark" alt="ZooFlow">
+      <button type="button" class="sidebar-close" data-sidebar-dismiss aria-label="მენიუს დახურვა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" stroke-linecap="round"/></svg>
+      </button>
     </div>
-    <nav class="flex-1 px-3 pb-4 space-y-0.5 text-sm overflow-y-auto">
+    <nav class="sidebar-nav flex-1 px-3 pb-4 space-y-1 text-sm overflow-y-auto">
       <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}">
         <svg class="h-5 w-5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
         <span>დეშბორდი</span>
@@ -76,7 +73,8 @@
       </div>
       {% endif %}
     </nav>
-    <div class="px-4 py-4 border-t border-gray-100">
+    <div class="sidebar-motif" aria-hidden="true"><span>flow.</span><i></i></div>
+    <div class="sidebar-profile px-4 py-4">
       <div class="flex items-center gap-3">
         <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-brand-700 text-xs font-bold">
           {% if user.first_name %}{{ user.first_name|slice:":1"|upper }}{{ user.last_name|slice:":1"|upper }}{% else %}{{ user.username|slice:":2"|upper }}{% endif %}
@@ -89,12 +87,15 @@
     </div>
   </aside>
 
-  <div class="flex-1 flex flex-col min-w-0">
-    <header class="h-16 border-b border-gray-100 bg-white/80 backdrop-blur sticky top-0 z-10 flex items-center justify-between px-6 gap-4">
-      <form method="get" action="{% url 'request_list' %}" class="flex-1 max-w-md">
+  <div class="app-workspace flex-1 flex flex-col min-w-0">
+    <header class="app-topbar sticky top-0 flex items-center justify-between gap-4">
+      <button type="button" class="sidebar-toggle" aria-controls="app-sidebar" aria-expanded="false" aria-label="მენიუს გახსნა">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke-linecap="round"/></svg>
+      </button>
+      <form method="get" action="{% url 'request_list' %}" class="topbar-search flex-1 max-w-md">
         <div class="relative">
           <svg class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path stroke-linecap="round" d="M21 21l-4.35-4.35"/></svg>
-          <input type="text" name="q" placeholder="ძებნა…" class="input !rounded-full !pl-9 !py-2 bg-gray-50 border-gray-200 focus:bg-white">
+          <input type="text" name="q" placeholder="ძებნა…" class="input topbar-search-input !pl-9" aria-label="ძებნა">
         </div>
       </form>
       <form method="post" action="{% url 'logout' %}">
@@ -106,7 +107,7 @@
       </form>
     </header>
 
-    <main class="flex-1 p-6 max-w-[1400px] w-full">
+    <main id="main-content" class="app-main flex-1 w-full">
       {% if messages %}
         <div class="mb-5 space-y-2">
           {% for message in messages %}
@@ -121,5 +122,44 @@
 {% else %}
   {% block auth_content %}{% endblock %}
 {% endif %}
+<script>
+(() => {
+  const sidebar = document.getElementById('app-sidebar');
+  const toggle = document.querySelector('.sidebar-toggle');
+  const backdrop = document.querySelector('.sidebar-backdrop');
+  if (!sidebar || !toggle || !backdrop) return;
+  const mobile = window.matchMedia('(max-width: 1023px)');
+  let previousFocus = null;
+  function setOpen(open) {
+    const visible = mobile.matches && open;
+    document.body.classList.toggle('nav-open', visible);
+    toggle.setAttribute('aria-expanded', String(visible));
+    sidebar.inert = mobile.matches && !visible;
+    sidebar.setAttribute('aria-hidden', String(mobile.matches && !visible));
+    backdrop.hidden = !visible;
+    if (visible) {
+      previousFocus = document.activeElement;
+      sidebar.querySelector('button, a[href]')?.focus();
+    } else if (previousFocus) {
+      previousFocus.focus();
+      previousFocus = null;
+    }
+  }
+  toggle.addEventListener('click', () => setOpen(!document.body.classList.contains('nav-open')));
+  document.querySelectorAll('[data-sidebar-dismiss]').forEach(button => button.addEventListener('click', () => setOpen(false)));
+  document.addEventListener('keydown', event => {
+    if (!document.body.classList.contains('nav-open')) return;
+    if (event.key === 'Escape') { event.preventDefault(); setOpen(false); return; }
+    if (event.key !== 'Tab') return;
+    const controls = [...sidebar.querySelectorAll('a[href], button:not([disabled])')].filter(node => node.getClientRects().length);
+    const first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+  });
+  mobile.addEventListener('change', () => setOpen(false));
+  setOpen(false);
+})();
+
+</script>
 </body>
 </html>

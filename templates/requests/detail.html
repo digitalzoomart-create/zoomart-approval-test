@@ -1,18 +1,19 @@
 {% extends "base.html" %}
 {% block title %}{{ obj.request_number }} — ZooFlow{% endblock %}
 {% block content %}
-<div class="max-w-5xl">
+<div class="page-view page-detail">
+<div class="detail-container">
 
-  <div class="flex items-start justify-between mb-6 gap-4">
+  <div class="detail-heading flex flex-wrap items-start justify-between mb-6 gap-4">
     <div>
       <div class="flex items-center flex-wrap gap-3">
-        <h1 class="text-2xl font-bold tracking-tight">{{ obj.title }}</h1>
+        <h1 class="page-title text-2xl font-bold tracking-tight">{{ obj.title }}</h1>
         <span class="badge badge-{{ obj.status_color }}">{{ obj.get_status_display }}</span>
         {% if obj.is_confidential %}<span class="badge badge-gray">კონფიდენციალური</span>{% endif %}
       </div>
       <div class="text-sm text-gray-500 mt-1.5">{{ obj.request_number }} &middot; პრიორიტეტი: {{ obj.get_priority_display }} &middot; {{ obj.estimated_cost }} {{ obj.currency }}</div>
     </div>
-    <div class="flex gap-2 shrink-0">
+    <div class="page-actions flex flex-wrap gap-2">
       {% if can_edit %}<a href="{% url 'request_edit' obj.pk %}" class="btn btn-secondary">რედაქტირება</a>{% endif %}
       {% if can_submit %}
       <form method="post" action="{% url 'request_submit' obj.pk %}"><input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}"><button class="btn btn-primary">გაგზავნა დასამტკიცებლად</button></form>
@@ -24,7 +25,7 @@
   </div>
 
   {% if can_act %}
-  <div class="card p-5 mb-6 !border-amber-100 bg-amber-50/60">
+  <div class="card decision-card p-5 mb-6 !border-amber-100 bg-amber-50/60">
     <div class="font-semibold text-sm mb-3 text-amber-900">საჭიროა თქვენი გადაწყვეტილება ამ მოთხოვნაზე</div>
     <form method="post" class="space-y-3">
       {% csrf_token %}
@@ -54,7 +55,7 @@
   {% if is_finance_user and obj.status == 'PURCHASED' %}
   <div class="card p-5 mb-6 !border-blue-100 bg-blue-50/60">
     <div class="text-sm font-semibold mb-3 text-blue-900">გადახდის დეტალების ჩაწერა</div>
-    <form method="post" action="{% url 'finance_paid' obj.pk %}" class="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
+    <form method="post" action="{% url 'finance_paid' obj.pk %}" class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 items-end">
       {% csrf_token %}
       <div><label class="field-label">ფაქტობრივი თანხა</label>{{ payment_form.actual_amount }}</div>
       <div><label class="field-label">ინვოისის №</label>{{ payment_form.invoice_number }}</div>
@@ -70,12 +71,12 @@
   </div>
   {% endif %}
 
-  <div class="grid md:grid-cols-3 gap-6">
-    <div class="md:col-span-2 space-y-6">
+  <div class="detail-grid grid xl:grid-cols-3 gap-6">
+    <div class="xl:col-span-2 space-y-6">
 
       <div class="card p-5">
         <h2 class="section-label mb-4">მოთხოვნის ინფორმაცია</h2>
-        <dl class="grid grid-cols-2 gap-y-4 text-sm">
+        <dl class="request-facts grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-5 text-sm">
           <div><dt class="text-gray-400 mb-0.5">მომთხოვნელი</dt><dd class="font-medium">{{ obj.requester }}</dd></div>
           <div><dt class="text-gray-400 mb-0.5">დეპარტამენტი</dt><dd class="font-medium">{{ obj.department|default:"—" }}</dd></div>
           <div><dt class="text-gray-400 mb-0.5">კატეგორია</dt><dd class="font-medium">{{ obj.category }}</dd></div>
@@ -107,7 +108,7 @@
         <h2 class="section-label mb-4">დანართები</h2>
         <ul class="divide-y divide-gray-50 mb-4">
           {% for a in attachments %}
-          <li class="py-2.5 flex items-center justify-between text-sm gap-3">
+          <li class="attachment-row py-3 flex flex-wrap items-center justify-between text-sm gap-3">
             <a href="{% url 'attachment_download' obj.pk a.pk %}" class="text-brand-600 hover:underline flex items-center gap-2 min-w-0">
               <svg class="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
               <span class="truncate">{{ a.original_filename }}</span>
@@ -118,7 +119,7 @@
           <li class="py-2.5 text-sm text-gray-500">ჯერ დანართები არ არის.</li>
           {% endfor %}
         </ul>
-        <form method="post" enctype="multipart/form-data" class="flex items-center gap-2">
+        <form method="post" enctype="multipart/form-data" class="attachment-form flex flex-wrap items-center gap-3">
           {% csrf_token %}
           {{ aform.file }}
           <button type="submit" name="upload_attachment" value="1" class="btn btn-secondary shrink-0">ატვირთვა</button>
@@ -142,7 +143,7 @@
           <p class="text-sm text-gray-500">ჯერ კომენტარები არ არის.</p>
           {% endfor %}
         </div>
-        <form method="post" class="flex gap-2">
+        <form method="post" class="comment-form flex flex-col sm:flex-row gap-3">
           {% csrf_token %}
           {{ cform.message }}
           <button type="submit" name="post_comment" value="1" class="btn btn-secondary shrink-0">გაგზავნა</button>
@@ -153,7 +154,7 @@
     <div class="space-y-6">
       <div class="card p-5">
         <h2 class="section-label mb-4">დამტკიცების ვადები</h2>
-        <ol>
+        <ol class="approval-timeline">
           <li class="flex gap-3 pb-5">
             <span class="flex flex-col items-center">
               <span class="h-2.5 w-2.5 rounded-full bg-gray-300 shrink-0 ring-4 ring-gray-50"></span>
@@ -200,5 +201,6 @@
       </div>
     </div>
   </div>
+</div>
 </div>
 {% endblock %}

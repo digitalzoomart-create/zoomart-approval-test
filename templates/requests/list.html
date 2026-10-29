@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 {% block title %}{{ title }} — ZooFlow{% endblock %}
 {% block content %}
-<div class="flex items-center justify-between mb-5">
-  <h1 class="text-2xl font-bold tracking-tight">{{ title }}</h1>
-  <div class="flex items-center gap-2">
+<div class="page-view page-requests">
+<div class="page-heading flex flex-wrap items-start justify-between mb-6 gap-4">
+  <h1 class="page-title text-2xl font-bold tracking-tight">{{ title }}</h1>
+  <div class="page-actions flex flex-wrap items-center gap-2">
     {% if can_export %}
     <a href="{% url 'request_list_export' %}?{{ request.GET.urlencode }}" class="btn btn-secondary">
       <svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3"/></svg>
@@ -17,9 +18,9 @@
   </div>
 </div>
 
-<form method="get" class="card p-4 mb-5 grid grid-cols-2 md:grid-cols-4 gap-3">
+<form method="get" class="card request-filters p-5 mb-6 grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
   <input type="hidden" name="scope" value="{{ scope }}">
-  <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="ძებნა…" class="input col-span-2">
+  <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="ძებნა…" class="input sm:col-span-2">
   <select name="status" class="input">
     <option value="">ყველა სტატუსი</option>
     {% for value, label in statuses %}<option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
@@ -46,7 +47,7 @@
     <label class="text-xs text-gray-400 mb-1 block">თარიღამდე</label>
     <input type="date" name="date_to" value="{{ request.GET.date_to|default:'' }}" class="input">
   </div>
-  <div class="col-span-2 md:col-span-4 flex items-center gap-2">
+  <div class="sm:col-span-2 xl:col-span-4 flex flex-wrap items-center gap-2 pt-2">
     <button class="btn btn-secondary">ფილტრის გამოყენება</button>
     {% if request.GET.q or request.GET.status or request.GET.department or request.GET.category or request.GET.priority or request.GET.date_from or request.GET.date_to %}
     <a href="?scope={{ scope }}" class="btn-ghost text-sm px-3 py-2 rounded-lg">ფილტრის გასუფთავება</a>
@@ -54,9 +55,9 @@
   </div>
 </form>
 
-<div class="card overflow-hidden">
+<div class="card data-card overflow-hidden">
   <div class="overflow-x-auto">
-  <table class="modern min-w-full">
+  <table class="modern requests-table min-w-full">
     <thead>
       <tr>
         <th>მოთხოვნის №</th>
@@ -71,15 +72,15 @@
     </thead>
     <tbody class="divide-y divide-gray-50">
       {% for r in page_obj %}
-      <tr class="cursor-pointer" onclick="window.location='{% url 'request_detail' r.pk %}'">
-        <td class="font-medium text-gray-900">{{ r.request_number }}</td>
-        <td>{{ r.title }}</td>
-        <td>{{ r.requester }}</td>
-        <td>{{ r.department|default:"—" }}</td>
-        <td>{{ r.estimated_cost }} {{ r.currency }}</td>
-        <td>{{ r.get_priority_display }}</td>
-        <td><span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span></td>
-        <td class="text-gray-400">{{ r.updated_at|date:"M j, Y" }}</td>
+      <tr class="request-table-row cursor-pointer" tabindex="0" role="link" onkeydown="if(event.key === 'Enter' || event.key === ' '){event.preventDefault();this.click();}" onclick="window.location='{% url 'request_detail' r.pk %}'">
+        <td data-label="მოთხოვნის №" class="font-medium text-gray-900">{{ r.request_number }}</td>
+        <td data-label="სათაური">{{ r.title }}</td>
+        <td data-label="მომთხოვნელი">{{ r.requester }}</td>
+        <td data-label="დეპარტამენტი">{{ r.department|default:"—" }}</td>
+        <td data-label="თანხა">{{ r.estimated_cost }} {{ r.currency }}</td>
+        <td data-label="პრიორიტეტი">{{ r.get_priority_display }}</td>
+        <td data-label="სტატუსი"><span class="badge badge-{{ r.status_color }}">{{ r.get_status_display }}</span></td>
+        <td data-label="განახლდა" class="text-gray-400">{{ r.updated_at|date:"M j, Y" }}</td>
       </tr>
       {% empty %}
       <tr><td colspan="8" class="px-4 py-16 text-center text-gray-500">
@@ -93,10 +94,11 @@
 </div>
 
 {% if page_obj.has_other_pages %}
-<div class="flex items-center gap-2 mt-4 text-sm">
+<div class="pagination flex flex-wrap items-center gap-2 mt-5 text-sm">
   {% if page_obj.has_previous %}<a class="btn btn-secondary" href="?page={{ page_obj.previous_page_number }}&scope={{ scope }}">წინა</a>{% endif %}
   <span class="px-3 py-2 text-gray-500">გვერდი {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
   {% if page_obj.has_next %}<a class="btn btn-secondary" href="?page={{ page_obj.next_page_number }}&scope={{ scope }}">შემდეგი</a>{% endif %}
 </div>
 {% endif %}
+</div>
 {% endblock %}

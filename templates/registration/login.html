@@ -2,13 +2,13 @@
 {% load static %}
 {% block title %}შესვლა — ZooFlow{% endblock %}
 {% block auth_content %}
-<div class="min-h-screen grid place-items-center px-4 bg-gray-50" style="background-image: radial-gradient(circle at 15% 15%, rgba(0,178,116,0.08), transparent 40%), radial-gradient(circle at 85% 85%, rgba(43,142,200,0.08), transparent 40%);">
-  <div class="w-full max-w-sm">
-    <div class="text-center mb-7">
-      <img src="{% static 'img/zoomart-icon.svg' %}" class="h-12 w-12 mx-auto mb-3 rounded-2xl shadow-soft" alt="ZooFlow">
-      <h1 class="text-lg font-bold tracking-tight">ZooFlow — Zoomart-ის ხარჯებისა და მოთხოვნების სისტემა</h1>
+<div class="auth-layout">
+  <div class="auth-panel w-full max-w-md">
+    <div class="auth-brand text-center mb-7">
+      <img src="{% static 'img/zooflow.svg' %}" class="auth-wordmark" alt="ZooFlow">
+      <h1 class="auth-title text-lg font-bold tracking-tight">ZooFlow — Zoomart-ის ხარჯებისა და მოთხოვნების სისტემა</h1>
     </div>
-    <div class="card p-7">
+    <div class="card auth-form-card p-6 sm:p-8">
       {% if form.errors %}
         <div class="mb-4 rounded-xl bg-red-50 text-red-700 border border-red-100 px-4 py-3 text-sm">არასწორი მომხმარებელი ან პაროლი.</div>
       {% endif %}
@@ -16,11 +16,11 @@
         {% csrf_token %}
         <div class="mb-4">
           <label class="field-label">მომხმარებლის სახელი</label>
-          <input type="text" name="username" class="input" autofocus required>
+          <input type="text" name="username" class="input" autocomplete="username" autofocus required>
         </div>
         <div class="mb-6">
           <label class="field-label">პაროლი</label>
-          <input type="password" name="password" class="input" required>
+          <input type="password" name="password" class="input" autocomplete="current-password" required>
         </div>
         <button type="submit" class="btn btn-primary w-full">შესვლა</button>
       </form>
